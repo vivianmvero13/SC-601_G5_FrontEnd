@@ -1,0 +1,187 @@
+﻿@page
+@model Front.Pages.Productos.IndexModel
+@{
+    Layout = "_Layout";
+}
+
+<h1 class="text-center">Productos</h1>
+
+<!-- Botón para abrir el modal -->
+<div class="text-center mb-4">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="abrirModalNuevo()">Agregar Producto</button>
+</div>
+
+<!-- Contenedor de cards -->
+<div class="container">
+    <div class="row" id="listaProductos"></div>
+</div>
+
+<!-- Modal para Agregar/Editar Producto -->
+<div class="modal fade" id="modalProducto" tabindex="-1" aria-labelledby="modalProductoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalProductoLabel">Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="id">
+
+                <div class="mb-3">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="nombre">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" class="form-control" id="descripcion">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Precio</label>
+                    <input type="number" class="form-control" id="precio">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Categoría</label>
+                    <select class="form-select" id="id_categoria"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="guardarProducto">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'https://localhost:7096/Productos';
+        const API_CATEGORIAS = 'https://localhost:7096/CategoriaProductos';
+    let modoEditar = false;
+
+    function cargarDatos() {
+        $.ajax({
+            url: API_URL,
+            method: 'GET',
+            success: function (productos) {
+                const contenedor = $("#listaProductos");
+                contenedor.empty();
+                productos.forEach(p => {
+                    contenedor.append(`
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">${p.nombre}</h5>
+                                    <p class="card-text">${p.descripcion}</p>
+                                    <p class="card-text fw-bold">₡${p.precio}</p>
+                                    <p class="card-text text-muted">Categoría: ${p.id_categoria}</p>
+                                </div>
+                                <div class="card-footer d-flex justify-content-between">
+                                    <button class="btn btn-sm btn-primary" onclick="abrirModalEditar(${p.id}, '${p.nombre}', '${p.descripcion}', ${p.precio}, ${p.id_categoria})">Editar</button>
+                                    <button class="btn btn-sm btn-danger" onclick="eliminarProducto(${p.id})">Eliminar</button>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+            },
+            error: function () {
+                alert("Error al cargar productos.");
+            }
+        });
+    }
+
+    function cargarCategorias() {
+        $.ajax({
+            url: API_CATEGORIAS,
+            method: 'GET',
+            success: function (categorias) {
+                const select = $('#id_categoria');
+                select.empty();
+                categorias.forEach(c => {
+                    select.append(`<option value="${c.id}">${c.nombre}</option>`);
+                });
+            },
+            error: function () {
+                alert("Error al cargar categorías.");
+            }
+        });
+    }
+
+    function abrirModalNuevo() {
+        modoEditar = false;
+        limpiarFormulario();
+        $('#modalProducto').modal('show');
+    }
+
+    function abrirModalEditar(id, nombre, descripcion, precio, id_categoria) {
+        modoEditar = true;
+        $('#id').val(id);
+        $('#nombre').val(nombre);
+        $('#descripcion').val(descripcion);
+        $('#precio').val(precio);
+        $('#id_categoria').val(id_categoria);
+        $('#modalProducto').modal('show');
+    }
+
+    function limpiarFormulario() {
+        $('#id').val("");
+        $('#nombre').val("");
+        $('#descripcion').val("");
+        $('#precio').val("");
+        $('#id_categoria').val("");
+    }
+
+    $('#guardarProducto').click(function () {
+        const item = {
+            id: $('#id').val(),
+            nombre: $('#nombre').val(),
+            descripcion: $('#descripcion').val(),
+            precio: $('#precio').val(),
+            id_categoria: $('#id_categoria').val()
+        };
+
+        if (modoEditar) {
+            $.ajax({
+                url: `${API_URL}/${item.id}`,
+                type: "PUT",
+                contentType: 'application/json',
+                data: JSON.stringify(item),
+                success: function () {
+                    $('#modalProducto').modal('hide');
+                    cargarDatos();
+                }
+            });
+        } else {
+            item.id = 0;
+            $.ajax({
+                url: API_URL,
+                type: "POST",
+                contentType: 'application/json',
+                data: JSON.stringify(item),
+                success: function () {
+                    $('#modalProducto').modal('hide');
+                    cargarDatos();
+                }
+            });
+        }
+    });
+
+    function eliminarProducto(id) {
+        if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+
+        $.ajax({
+            url: `${API_URL}/${id}`,
+            type: "DELETE",
+            success: function () {
+                cargarDatos();
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        cargarCategorias();
+        cargarDatos();
+    });
+</script>

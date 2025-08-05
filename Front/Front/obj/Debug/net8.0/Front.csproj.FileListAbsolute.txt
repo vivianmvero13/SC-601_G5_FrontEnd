@@ -27,3 +27,37 @@ C:\Users\vivia\Universidad\Progra Avanzada\SC-601_G5_FrontEnd\Front\Front\obj\De
 C:\Users\vivia\Universidad\Progra Avanzada\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.pdb
 C:\Users\vivia\Universidad\Progra Avanzada\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.genruntimeconfig.cache
 C:\Users\vivia\Universidad\Progra Avanzada\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\ref\Front.dll
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\bin\Debug\net8.0\appsettings.Development.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\bin\Debug\net8.0\appsettings.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\bin\Debug\net8.0\Front.staticwebassets.runtime.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\bin\Debug\net8.0\Front.staticwebassets.endpoints.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\bin\Debug\net8.0\Front.exe
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\bin\Debug\net8.0\Front.deps.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\bin\Debug\net8.0\Front.runtimeconfig.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\bin\Debug\net8.0\Front.dll
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\bin\Debug\net8.0\Front.pdb
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.AssemblyInfoInputs.cache
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.AssemblyInfo.cs
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.csproj.CoreCompileInputs.cache
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.RazorAssemblyInfo.cache
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.RazorAssemblyInfo.cs
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.sourcelink.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\rjimswa.dswa.cache.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\scopedcss\Pages\Shared\_Layout.cshtml.rz.scp.css
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\scopedcss\bundle\Front.styles.css
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\scopedcss\projectbundle\Front.bundle.scp.css
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\staticwebassets.build.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\staticwebassets.build.json.cache
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\staticwebassets.development.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\staticwebassets.build.endpoints.json
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.dll
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\refint\Front.dll
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.pdb
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.genruntimeconfig.cache
+C:\Users\cihc2\Documents\Universidad\SC-502 Ambiente Web Cliente-Servidor\Proyecto\Nueva carpeta\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\ref\Front.dll

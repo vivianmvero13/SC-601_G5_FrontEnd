@@ -8,23 +8,23 @@
     "net8.0": []
   },
   "packageFolders": {
-    "C:\\Users\\vivia\\.nuget\\packages\\": {},
+    "C:\\Users\\cihc2\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\vivia\\Universidad\\Progra Avanzada\\SC-601_G5_FrontEnd\\Front\\Front\\Front.csproj",
+      "projectUniqueName": "C:\\Users\\cihc2\\Documents\\Universidad\\SC-502 Ambiente Web Cliente-Servidor\\Proyecto\\Nueva carpeta\\SC-601_G5_FrontEnd\\Front\\Front\\Front.csproj",
       "projectName": "Front",
-      "projectPath": "C:\\Users\\vivia\\Universidad\\Progra Avanzada\\SC-601_G5_FrontEnd\\Front\\Front\\Front.csproj",
-      "packagesPath": "C:\\Users\\vivia\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\vivia\\Universidad\\Progra Avanzada\\SC-601_G5_FrontEnd\\Front\\Front\\obj\\",
+      "projectPath": "C:\\Users\\cihc2\\Documents\\Universidad\\SC-502 Ambiente Web Cliente-Servidor\\Proyecto\\Nueva carpeta\\SC-601_G5_FrontEnd\\Front\\Front\\Front.csproj",
+      "packagesPath": "C:\\Users\\cihc2\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\cihc2\\Documents\\Universidad\\SC-502 Ambiente Web Cliente-Servidor\\Proyecto\\Nueva carpeta\\SC-601_G5_FrontEnd\\Front\\Front\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\vivia\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\cihc2\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -32,7 +32,6 @@
         "net8.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -75,7 +74,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
