@@ -1,2 +1,13 @@
+# Archivos temporales de Visual Studio
 .vs/
-API/.vs/
+*.user
+*.suo
+
+# Carpetas de compilación
+bin/
+obj/
+
+# Otros
+*.log
+*.tmp
+*.cache
