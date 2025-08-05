@@ -27,3 +27,4 @@ C:\Users\vivia\Universidad\Progra Avanzada\SC-601_G5_FrontEnd\Front\Front\obj\De
 C:\Users\vivia\Universidad\Progra Avanzada\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.pdb
 C:\Users\vivia\Universidad\Progra Avanzada\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.genruntimeconfig.cache
 C:\Users\vivia\Universidad\Progra Avanzada\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\ref\Front.dll
+C:\Users\vivia\Universidad\Progra Avanzada\SC-601_G5_FrontEnd\Front\Front\obj\Debug\net8.0\Front.sourcelink.json
