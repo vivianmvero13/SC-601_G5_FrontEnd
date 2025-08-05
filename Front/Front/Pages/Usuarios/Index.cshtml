@@ -1,0 +1,181 @@
+﻿@page
+@model Front.Pages.Usuarios.IndexModel
+@{
+	    Layout = "_Layout";
+}
+
+<h1>Usuarios</h1>
+
+<div class="container">
+
+    <div class="mb-3">
+        <label for="" class="form-label">Id</label>
+        <input type="text" class="form-control" name="id" id="id" placeholder="" />
+        <small class="form-text text-muted">ID del usuario</small>
+    </div>
+
+    <div class="mb-3">
+        <label for="" class="form-label">Nombre</label>
+        <input type="text" class="form-control" name="nombre" id="nombre" placeholder="" />
+        <small class="form-text text-muted">Nombre del usuario</small>
+    </div>
+
+    <div class="mb-3">
+        <label for="" class="form-label">Correo</label>
+        <input type="text" class="form-control" name="correo" id="correo" placeholder="" />
+        <small class="form-text text-muted">Correo del usuario</small>
+    </div>
+
+    <div class="mb-3">
+        <label for="" class="form-label">Rol</label>
+        <input type="text" class="form-control" name="id_rol" id="id_rol" placeholder="" />
+        <small class="form-text text-muted">Rol del usuario</small>
+    </div>
+
+    <div class="mb-3">
+        <label for="" class="form-label">Dirección</label>
+        <input type="text" class="form-control" name="direccion" id="direccion" placeholder="" />
+        <small class="form-text text-muted">Dirección del usuario</small>
+    </div>
+
+    <div class="mb-3">
+        <label for="" class="form-label">Teléfono</label>
+        <input type="text" class="form-control" name="telefono" id="telefono" placeholder="" />
+        <small class="form-text text-muted">Teléfono del usuario</small>
+    </div>
+
+    <div class="mb-3">
+        <label for="" class="form-label">Fecha de registro</label>
+        <input type="text" class="form-control" name="fecha_registro" id="fecha_registro" placeholder="" />
+        <small class="form-text text-muted">Fecha de registro</small>
+    </div>
+
+    <div class="mb-3">
+        <label for="" class="form-label">Estado</label>
+        <input type="text" class="form-control" name="id_estado" id="id_estado" placeholder="" />
+        <small class="form-text text-muted">Estado del usuario</small>
+    </div>
+
+    <a id="guardarDatos" class="btn btn-primary">Nuevo registro</a>
+    <a id="modificarDatos" class="btn btn-success">Actualizar</a>
+    <a id="limpiarDatos" onclick="limpiarDatos()" class="btn btn-danger">Limpiar</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-primary">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Dirección</th>
+                <th>Teléfono</th>
+                <th>Fecha de registro</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="listaDatos"></tbody>
+    </table>
+</div>
+
+<script>
+    const API_URL = 'https://localhost:7096/Usuario';
+
+    function cargarDatos() {
+        limpiarDatos();
+        $.ajax({
+            url: API_URL,
+            method: 'GET',
+            success: function (dato) {
+                console.log(dato);
+                $("#listaDatos").empty();
+                dato.forEach(soyItem => {
+                    $("#listaDatos").append(`
+                        <tr>
+                            <td>${soyItem.id}</td>
+                            <td>${soyItem.nombre}</td>
+                            <td>${soyItem.correo}</td>
+                            <td>${soyItem.id_rol}</td>
+                            <td>${soyItem.direccion}</td>
+                            <td>${soyItem.telefono}</td>
+                            <td>${soyItem.fecha_registro}</td>
+                            <td>${soyItem.id_estado}</td>
+                            <th>
+                                <a class="btn btn-primary" href="#" role="button"
+                                   onclick="cargarEditar('${soyItem.id}','${soyItem.nombre}','${soyItem.correo}','${soyItem.id_rol}','${soyItem.direccion}','${soyItem.telefono}','${soyItem.fecha_registro}','${soyItem.id_estado}')">
+                                   Editar</a>
+                                <a class="btn btn-danger" href="#" role="button">Eliminar</a>
+                            </th>
+                        </tr>
+                    `);
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("error " + error);
+            }
+        });
+    }
+
+    window.cargarEditar = function (id, nombre, correo, id_rol, direccion, telefono, fecha_registro, id_estado) {
+        $('#id').val(id);
+        $('#nombre').val(nombre);
+        $('#correo').val(correo);
+        $('#id_rol').val(id_rol);
+        $('#direccion').val(direccion);
+        $('#telefono').val(telefono);
+        $('#fecha_registro').val(fecha_registro);
+        $('#id_estado').val(id_estado);
+
+        $("#guardarDatos").hide();
+        $("#modificarDatos").show();
+    }
+
+    window.limpiarDatos = function () {
+        $('#id').val("");
+        $('#nombre').val("");
+        $('#correo').val("");
+        $('#id_rol').val("");
+        $('#direccion').val("");
+        $('#telefono').val("");
+        $('#fecha_registro').val("");
+        $('#id_estado').val("");
+
+        $("#modificarDatos").hide();
+        $("#guardarDatos").show();
+    }
+
+    $("#guardarDatos").click(function () {
+        const item = {
+            id: 0,
+            nombre: $('#nombre').val(),
+            correo: $('#correo').val(),
+            id_rol: $('#id_rol').val(),
+            direccion: $('#direccion').val(),
+            telefono: $('#telefono').val(),
+            fecha_registro: $('#fecha_registro').val(),
+            id_estado: $('#id_estado').val()
+        };
+
+        console.log(item);
+
+        $.ajax({
+            url: API_URL,
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            success: function () {
+                alert("Registro creado correctamente");
+                cargarDatos();
+            },
+            error: function (xhr, status, error) {
+                console.error("error " + error);
+            }
+        });
+    });
+
+    $(document).ready(function () {
+        cargarDatos();
+    });
+</script>
