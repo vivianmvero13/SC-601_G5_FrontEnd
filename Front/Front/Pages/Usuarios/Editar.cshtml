@@ -1,0 +1,255 @@
+﻿@page
+@model Front.Pages.Usuarios.EditarModel
+@{
+}
+
+<div class="container">
+    <input type="hidden" id="id" />
+    <input type="hidden" id="id_direccion" />
+    <input type="hidden" id="detalle_original" />
+    <input type="hidden" id="id_distrito_original" />
+
+
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-control" id="nombre" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Correo</label>
+        <input type="text" class="form-control" id="correo" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Contraseña</label>
+        <div class="input-group">
+            <input type="password" class="form-control" id="contrasena" />
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword">Ver</button>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Rol</label>
+        <input type="text" class="form-control" id="id_rol" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Dirección exacta</label>
+        <input type="text" class="form-control" id="detalle" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">País</label>
+        <select class="form-control" id="id_pais"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Provincia</label>
+        <select class="form-control" id="id_provincia"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantón</label>
+        <select class="form-control" id="id_canton"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Distrito</label>
+        <select class="form-control" id="id_distrito"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Teléfono</label>
+        <input type="text" class="form-control" id="telefono" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha de registro</label>
+        <input type="date" class="form-control" id="fecha_registro" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Estado</label>
+        <input type="text" class="form-control" id="id_estado" />
+    </div>
+
+    <button id="modificarDatos" class="btn btn-success">Actualizar</button>
+
+</div>
+
+<script>
+    const API_URL = 'https://localhost:7096/Usuario';
+    const DIR_URL = 'https://localhost:7096/Direccion';
+
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    function cargarPaises() {
+        $.get('https://localhost:7096/Pais', function (data) {
+            $('#id_pais').empty().append('<option value="">Seleccione</option>');
+            data.forEach(p => $('#id_pais').append(`<option value="${p.id}">${p.nombre}</option>`));
+        });
+    }
+
+    function cargarProvincias(paisId, selectedId = null) {
+        $.get(`https://localhost:7096/Provincia?paisId=${paisId}`, function (data) {
+            $('#id_provincia').empty().append('<option value="">Seleccione</option>');
+            data.forEach(p => {
+                const selected = selectedId == p.id ? 'selected' : '';
+                $('#id_provincia').append(`<option value="${p.id}" ${selected}>${p.nombre}</option>`);
+            });
+        });
+    }
+
+    function cargarCantones(provinciaId, selectedId = null) {
+        $.get(`https://localhost:7096/Canton?provinciaId=${provinciaId}`, function (data) {
+            $('#id_canton').empty().append('<option value="">Seleccione</option>');
+            data.forEach(c => {
+                const selected = selectedId == c.id ? 'selected' : '';
+                $('#id_canton').append(`<option value="${c.id}" ${selected}>${c.nombre}</option>`);
+            });
+        });
+    }
+
+    function cargarDistritos(cantonId, selectedId = null) {
+        $.get(`https://localhost:7096/Distrito?cantonId=${cantonId}`, function (data) {
+            $('#id_distrito').empty().append('<option value="">Seleccione</option>');
+            data.forEach(d => {
+                const selected = selectedId == d.id ? 'selected' : '';
+                $('#id_distrito').append(`<option value="${d.id}" ${selected}>${d.nombre}</option>`);
+            });
+        });
+    }
+
+    // Función inversa: dado el ID de distrito, obtiene el cantón, provincia y país asociados
+    function direccionInversa(id_distrito, callback) {
+        $.get(`https://localhost:7096/Distrito?id=${id_distrito}`, function (distrito) {
+            const id_canton = distrito.id_canton;
+            $.get(`https://localhost:7096/Canton?id=${id_canton}`, function (canton) {
+                const id_provincia = canton.id_provincia;
+                $.get(`https://localhost:7096/Provincia?id=${id_provincia}`, function (provincia) {
+                    const id_pais = provincia.id_pais;
+
+                    $('#id_pais').val(id_pais);
+                    cargarProvincias(id_pais, id_provincia);
+                    cargarCantones(id_provincia, id_canton);
+                    cargarDistritos(id_canton, id_distrito);
+
+                    if (callback) callback();
+                });
+            });
+        });
+    }
+
+    function cargarUsuario(id) {
+        $.get(`${API_URL}/${id}`, function (usuario) {
+            $('#id').val(usuario.id);
+            $('#nombre').val(usuario.nombre);
+            $('#correo').val(usuario.correo);
+            $('#contrasena').val(usuario.contrasena);
+            $('#id_rol').val(usuario.id_rol);
+            $('#telefono').val(usuario.telefono);
+            $('#fecha_registro').val(usuario.fecha_registro.split("T")[0]);
+            $('#id_estado').val(usuario.id_estado);
+
+            $.get(`${DIR_URL}?id=${usuario.id_direccion}`, function (dir) {
+                $('#detalle').val(dir.detalle);
+                $('#id_direccion').val(dir.id);
+                $('#detalle_original').val(dir.detalle);
+                $('#id_distrito_original').val(dir.id_distrito);
+
+                direccionInversa(dir.id_distrito);
+            });
+        });
+    }
+
+    $("#modificarDatos").click(function () {
+        const id_usuario = $('#id').val();
+        const id_direccion = $('#id_direccion').val();
+
+        const direccionModificada = $('#detalle').val() !== $('#detalle_original').val() ||
+                                    $('#id_distrito').val() !== $('#id_distrito_original').val();
+
+        if (direccionModificada) {
+            const nuevaDireccion = {
+                id: id_direccion,
+                detalle: $('#detalle').val(),
+                id_distrito: $('#id_distrito').val()
+            };
+
+            $.ajax({
+                url: DIR_URL,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(nuevaDireccion),
+                success: function () {
+                    actualizarUsuario(id_usuario);
+                },
+                error: function () {
+                    alert("Error al actualizar dirección");
+                }
+            });
+        } else {
+            actualizarUsuario(id_usuario);
+        }
+    });
+
+    function actualizarUsuario(id) {
+        const usuario = {
+            id: parseInt(id),
+            nombre: $('#nombre').val(),
+            correo: $('#correo').val(),
+            contrasena: $('#contrasena').val(),
+            id_rol: $('#id_rol').val(),
+            telefono: $('#telefono').val(),
+            fecha_registro: $('#fecha_registro').val(),
+            id_estado: $('#id_estado').val()
+        };
+
+        $.ajax({
+            url: `${API_URL}/${id}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(usuario),
+            success: function () {
+                alert("Usuario actualizado correctamente");
+                window.location.href = "/Usuarios/Index";
+            },
+            error: function (e) {
+                console.error("Error al actualizar usuario:", e);
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        const id = getQueryParam('id');
+        if (id) {
+            cargarUsuario(id);
+        } else {
+            alert("ID de usuario no especificado");
+        }
+
+        cargarPaises();
+
+        // Select encadenado
+        $('#id_pais').change(function () {
+            const paisId = $(this).val();
+            cargarProvincias(paisId);
+            $('#id_provincia, #id_canton, #id_distrito').empty().append('<option value="">Seleccione</option>');
+        });
+
+        $('#id_provincia').change(function () {
+            const provinciaId = $(this).val();
+            cargarCantones(provinciaId);
+            $('#id_canton, #id_distrito').empty().append('<option value="">Seleccione</option>');
+        });
+
+        $('#id_canton').change(function () {
+            const cantonId = $(this).val();
+            cargarDistritos(cantonId);
+            $('#id_distrito').empty().append('<option value="">Seleccione</option>');
+        });
+    });
+</script>

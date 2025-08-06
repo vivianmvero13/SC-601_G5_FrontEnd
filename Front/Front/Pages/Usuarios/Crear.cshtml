@@ -1,0 +1,182 @@
+﻿@page
+@model Front.Pages.Usuarios.CrearModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <input type="hidden" id="id" />
+
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-control" id="nombre" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Correo</label>
+        <input type="text" class="form-control" id="correo" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Contraseña</label>
+        <div class="input-group">
+            <input type="password" class="form-control" id="contrasena" />
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword">Ver</button>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Rol</label>
+        <input type="text" class="form-control" id="id_rol" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Dirección exacta</label>
+        <input type="text" class="form-control" id="detalle" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">País</label>
+        <select class="form-control" id="id_pais"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Provincia</label>
+        <select class="form-control" id="id_provincia"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantón</label>
+        <select class="form-control" id="id_canton"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Distrito</label>
+        <select class="form-control" id="id_distrito"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Teléfono</label>
+        <input type="text" class="form-control" id="telefono" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha de registro</label>
+        <input type="date" class="form-control" id="fecha_registro" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Estado</label>
+        <input type="text" class="form-control" id="id_estado" />
+    </div>
+
+    <button id="guardarDatos" class="btn btn-primary">Guardar</button>
+</div>
+
+<script>
+    const DIR_URL = 'https://localhost:7096/Direccion';
+    const API_URL = 'https://localhost:7096/Usuario';
+
+    $(document).ready(function () {
+        cargarPaises();
+
+        $('#id_pais').change(function () {
+            const paisId = $(this).val();
+            cargarProvincias(paisId);
+            $('#id_provincia, #id_canton, #id_distrito').empty().append('<option value="">Seleccione</option>');
+        });
+
+        $('#id_provincia').change(function () {
+            const provinciaId = $(this).val();
+            cargarCantones(provinciaId);
+            $('#id_canton, #id_distrito').empty().append('<option value="">Seleccione</option>');
+        });
+
+        $('#id_canton').change(function () {
+            const cantonId = $(this).val();
+            cargarDistritos(cantonId);
+            $('#id_distrito').empty().append('<option value="">Seleccione</option>');
+        });
+
+        $('#togglePassword').click(function () {
+            const input = $('#contrasena');
+            const type = input.attr("type") === "password" ? "text" : "password";
+            input.attr("type", type);
+            $(this).text(type === "password" ? "Ver" : "Ocultar");
+        });
+
+        $('#guardarDatos').click(function () {
+            const direccion = {
+                detalle: $('#detalle').val(),
+                id_pais: $('#id_pais').val(),
+                id_provincia: $('#id_provincia').val(),
+                id_canton: $('#id_canton').val(),
+                id_distrito: $('#id_distrito').val()
+            };
+
+            $.ajax({
+                url: DIR_URL,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(direccion),
+                success: function (direccionCreada) {
+                    const usuario = {
+                        nombre: $('#nombre').val(),
+                        correo: $('#correo').val(),
+                        contrasena: $('#contrasena').val(),
+                        id_rol: $('#id_rol').val(),
+                        id_direccion: direccionCreada.id,
+                        telefono: $('#telefono').val(),
+                        fecha_registro: $('#fecha_registro').val(),
+                        id_estado: $('#id_estado').val()
+                    };
+
+                    $.ajax({
+                        url: API_URL,
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(usuario),
+                        success: function () {
+                            alert("Usuario creado correctamente");
+                            window.location.href = '/Usuarios';
+                        },
+                        error: function (e) {
+                            console.error("Error al crear usuario:", e);
+                        }
+                    });
+                },
+                error: function (e) {
+                    console.error("Error al crear dirección:", e);
+                }
+            });
+        });
+    });
+
+    function cargarPaises() {
+        $.get('https://localhost:7096/Pais', function (data) {
+            $('#id_pais').empty().append('<option value="">Seleccione</option>');
+            data.forEach(p => $('#id_pais').append(`<option value="${p.id}">${p.nombre}</option>`));
+        });
+    }
+
+    function cargarProvincias(paisId) {
+        $.get(`https://localhost:7096/Provincia?paisId=${paisId}`, function (data) {
+            $('#id_provincia').empty().append('<option value="">Seleccione</option>');
+            data.forEach(p => $('#id_provincia').append(`<option value="${p.id}">${p.nombre}</option>`));
+        });
+    }
+
+    function cargarCantones(provinciaId) {
+        $.get(`https://localhost:7096/Canton?provinciaId=${provinciaId}`, function (data) {
+            $('#id_canton').empty().append('<option value="">Seleccione</option>');
+            data.forEach(c => $('#id_canton').append(`<option value="${c.id}">${c.nombre}</option>`));
+        });
+    }
+
+    function cargarDistritos(cantonId) {
+        $.get(`https://localhost:7096/Distrito?cantonId=${cantonId}`, function (data) {
+            $('#id_distrito').empty().append('<option value="">Seleccione</option>');
+            data.forEach(d => $('#id_distrito').append(`<option value="${d.id}">${d.nombre}</option>`));
+        });
+    }
+</script>

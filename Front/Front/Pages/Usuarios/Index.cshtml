@@ -6,76 +6,7 @@
 
 <h1>Usuarios</h1>
 
-<div class="container">
-    <input type="hidden" id="id" />
-
-    <div class="mb-3">
-        <label class="form-label">Nombre</label>
-        <input type="text" class="form-control" id="nombre" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Correo</label>
-        <input type="text" class="form-control" id="correo" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Contraseña</label>
-        <div class="input-group">
-            <input type="password" class="form-control" id="contrasena" />
-            <button class="btn btn-outline-secondary" type="button" id="togglePassword">Ver</button>
-        </div>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Rol</label>
-        <input type="text" class="form-control" id="id_rol" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Dirección exacta</label>
-        <input type="text" class="form-control" id="detalle" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">País</label>
-        <select class="form-control" id="id_pais"></select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Provincia</label>
-        <select class="form-control" id="id_provincia"></select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Cantón</label>
-        <select class="form-control" id="id_canton"></select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Distrito</label>
-        <select class="form-control" id="id_distrito"></select>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Teléfono</label>
-        <input type="text" class="form-control" id="telefono" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Fecha de registro</label>
-        <input type="date" class="form-control" id="fecha_registro" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Estado</label>
-        <input type="text" class="form-control" id="id_estado" />
-    </div>
-
-    <a id="guardarDatos" class="btn btn-primary">Nuevo registro</a>
-    <a id="modificarDatos" class="btn btn-success">Actualizar</a>
-    <a id="limpiarDatos" class="btn btn-danger" onclick="limpiarDatos()">Limpiar</a>
-</div>
+<a class="btn btn-primary" asp-area="" asp-page="/Usuarios/Crear">Nuevo registro</a>
 
 <div class="table-responsive mt-4">
     <table class="table table-primary">
@@ -84,6 +15,11 @@
                 <th>Id</th>
                 <th>Nombre</th>
                 <th>Correo</th>
+                <th>País</th>
+                <th>Provincia</th>
+                <th>Cantón</th>
+                <th>Distrito</th>
+                <th>Dirección exacta</th>
                 <th>Rol</th>
                 <th>Teléfono</th>
                 <th>Fecha de registro</th>
@@ -100,101 +36,58 @@
     const DIR_URL = 'https://localhost:7096/Direccion';
 
     function cargarDatos() {
-        limpiarDatos();
-        $.get(API_URL, function (dato) {
+        $.get(API_URL, function (usuarios) {
             $("#listaDatos").empty();
-            dato.forEach(u => {
-                $("#listaDatos").append(`
-                    <tr>
-                        <td>${u.id}</td>
-                        <td>${u.nombre}</td>
-                        <td>${u.correo}</td>
-                        <td>${u.id_rol}</td>
-                        <td>${u.telefono}</td>
-                        <td>${u.fecha_registro}</td>
-                        <td>${u.id_estado}</td>
-                        <td>
-                            <a class="btn btn-primary" onclick="cargarEditar('${u.id}','${u.nombre}','${u.correo}','${u.contrasena}','${u.id_rol}','${u.telefono}','${u.fecha_registro}','${u.id_estado}')">Editar</a>
-                            <a class="btn btn-danger" onclick="eliminarUsuario('${u.id}')">Eliminar</a>
-                        </td>
-                    </tr>`);
+
+            usuarios.forEach(u => {
+                $.get(`${DIR_URL}/${u.id_direccion}`, function (dir) {
+                    const distritoId = dir.id_distrito;
+                    const cantonId = dir.id_canton;
+                    const provinciaId = dir.id_provincia;
+                    const paisId = dir.id_pais;
+
+                    $.when(
+                        $.get(`https://localhost:7096/Distrito/${distritoId}`),
+                        $.get(`https://localhost:7096/Canton/${cantonId}`),
+                        $.get(`https://localhost:7096/Provincia/${provinciaId}`),
+                        $.get(`https://localhost:7096/Pais/${paisId}`),
+                        $.get(`https://localhost:7096/Roles/${u.id_rol}`),
+                        $.get(`https://localhost:7096/Estados/${u.id_estado}`)
+                    ).done(function (distResp, cantonResp, provResp, paisResp, rolResp, estadoResp) {
+                        const dist = distResp[0];
+                        const canton = cantonResp[0];
+                        const prov = provResp[0];
+                        const pais = paisResp[0];
+                        const rol = rolResp[0];
+                        const estado = estadoResp[0];
+
+                        $("#listaDatos").append(`
+                            <tr>
+                                <td>${u.id}</td>
+                                <td>${u.nombre}</td>
+                                <td>${u.correo}</td>
+                                <td>${pais.nombre}</td>
+                                <td>${prov.nombre}</td>
+                                <td>${canton.nombre}</td>
+                                <td>${dist.nombre}</td>
+                                <td>${dir.detalle}</td>
+                                <td>${rol.nombre}</td>
+                                <td>${u.telefono}</td>
+                                <td>${u.fecha_registro.split('T')[0]}</td>
+                                <td>${estado.nombre}</td>
+                                <td>
+                                    <a class="btn btn-primary" href="/Usuarios/Editar?id=${u.id}">Editar</a>
+                                    <a class="btn btn-danger" onclick="eliminarUsuario('${u.id}')">Eliminar</a>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                });
             });
         });
     }
 
-    $("#guardarDatos").click(function () {
-        const direccion = {
-            detalle: $('#detalle').val(),
-            id_pais: $('#id_pais').val(),
-            id_provincia: $('#id_provincia').val(),
-            id_canton: $('#id_canton').val(),
-            id_distrito: $('#id_distrito').val()
-        };
 
-        $.ajax({
-            url: 'https://localhost:7096/Direccion',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(direccion),
-            success: function (direccionCreada) {
-                const usuario = {
-                    nombre: $('#nombre').val(),
-                    correo: $('#correo').val(),
-                    contrasena: $('#contrasena').val(),
-                    id_rol: $('#id_rol').val(),
-                    id_direccion: direccionCreada.id,
-                    telefono: $('#telefono').val(),
-                    fecha_registro: $('#fecha_registro').val(),
-                    id_estado: $('#id_estado').val()
-                };
-
-                $.ajax({
-                    url: API_URL,
-                    type: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(usuario),
-                    success: function () {
-                        alert("Usuario creado correctamente");
-                        cargarDatos();
-                    },
-                    error: function (e) {
-                        console.error("Error al crear usuario:", e);
-                    }
-                });
-            },
-            error: function (e) {
-                console.error("Error al crear dirección:", e);
-            }
-        });
-    });
-
-    $("#modificarDatos").click(function () {
-        const id = $('#id').val();
-        const usuario = {
-            id: parseInt(id),
-            nombre: $('#nombre').val(),
-            correo: $('#correo').val(),
-            contrasena: $('#contrasena').val(),
-            id_rol: $('#id_rol').val(),
-            telefono: $('#telefono').val(),
-            fecha_registro: $('#fecha_registro').val(),
-            id_estado: $('#id_estado').val()
-        };
-
-        $.ajax({
-            url: `${API_URL}/${id}`,
-            type: 'PUT',
-            contentType: 'application/json',
-            data: JSON.stringify(usuario),
-            success: function () {
-                alert("Usuario actualizado");
-                cargarDatos();
-            },
-            error: function (e) {
-                console.error("Error al actualizar:", e);
-            }
-        });
-    });
 
     function eliminarUsuario(id) {
         if (!confirm("¿Desea eliminar este usuario?")) return;
@@ -212,81 +105,7 @@
         });
     }
 
-    function cargarEditar(id, nombre, correo, contrasena, id_rol, telefono, fecha_registro, id_estado) {
-        $('#id').val(id);
-        $('#nombre').val(nombre);
-        $('#correo').val(correo);
-        $('#contrasena').val(contrasena);
-        $('#id_rol').val(id_rol);
-        $('#telefono').val(telefono);
-        $('#fecha_registro').val(fecha_registro);
-        $('#id_estado').val(id_estado);
-
-        $("#guardarDatos").hide();
-        $("#modificarDatos").show();
-    }
-
-    function limpiarDatos() {
-        $('#id, #nombre, #correo, #contrasena, #id_rol, #detalle, #telefono, #fecha_registro, #id_estado').val("");
-        $("#guardarDatos").show();
-        $("#modificarDatos").hide();
-    }
-
-    $("#togglePassword").click(function () {
-        const input = $("#contrasena");
-        const type = input.attr("type") === "password" ? "text" : "password";
-        input.attr("type", type);
-        $(this).text(type === "password" ? "Ver" : "Ocultar");
-    });
-
-    function cargarPaises() {
-        $.get('https://localhost:7096/Pais', function (data) {
-            $('#id_pais').empty().append('<option value="">Seleccione</option>');
-            data.forEach(p => $('#id_pais').append(`<option value="${p.id}">${p.nombre}</option>`));
-        });
-    }
-
-    function cargarProvincias(paisId) {
-        $.get(`https://localhost:7096/Provincia?paisId=${paisId}`, function (data) {
-            $('#id_provincia').empty().append('<option value="">Seleccione</option>');
-            data.forEach(p => $('#id_provincia').append(`<option value="${p.id}">${p.nombre}</option>`));
-        });
-    }
-
-    function cargarCantones(provinciaId) {
-        $.get(`https://localhost:7096/Canton?provinciaId=${provinciaId}`, function (data) {
-            $('#id_canton').empty().append('<option value="">Seleccione</option>');
-            data.forEach(c => $('#id_canton').append(`<option value="${c.id}">${c.nombre}</option>`));
-        });
-    }
-
-    function cargarDistritos(cantonId) {
-        $.get(`https://localhost:7096/Distrito?cantonId=${cantonId}`, function (data) {
-            $('#id_distrito').empty().append('<option value="">Seleccione</option>');
-            data.forEach(d => $('#id_distrito').append(`<option value="${d.id}">${d.nombre}</option>`));
-        });
-    }
-
     $(document).ready(function () {
         cargarDatos();
-        cargarPaises();
-
-        $('#id_pais').change(function () {
-            const paisId = $(this).val();
-            cargarProvincias(paisId);
-            $('#id_provincia, #id_canton, #id_distrito').empty().append('<option value="">Seleccione</option>');
-        });
-
-        $('#id_provincia').change(function () {
-            const provinciaId = $(this).val();
-            cargarCantones(provinciaId);
-            $('#id_canton, #id_distrito').empty().append('<option value="">Seleccione</option>');
-        });
-
-        $('#id_canton').change(function () {
-            const cantonId = $(this).val();
-            cargarDistritos(cantonId);
-            $('#id_distrito').empty().append('<option value="">Seleccione</option>');
-        });
     });
 </script>
