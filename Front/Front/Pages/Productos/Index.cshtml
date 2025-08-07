@@ -6,17 +6,17 @@
 
 <h1 class="text-center">Productos</h1>
 
-<!-- Botón para abrir el modal -->
+
 <div class="text-center mb-4">
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="abrirModalNuevo()">Agregar Producto</button>
 </div>
 
-<!-- Contenedor de cards -->
+
 <div class="container">
     <div class="row" id="listaProductos"></div>
 </div>
 
-<!-- Modal para Agregar/Editar Producto -->
+
 <div class="modal fade" id="modalProducto" tabindex="-1" aria-labelledby="modalProductoLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -61,7 +61,7 @@
     let modoEditar = false;
 
     function cargarDatos() {
-        $.ajax({
+        $.ajax({ 
             url: API_URL,
             method: 'GET',
             success: function (productos) {
