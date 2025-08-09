@@ -23,10 +23,15 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item" id="navUsuarios" style="display:none;">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Usuarios/Index">Usuarios</a>
                         </li>
-
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Login/Index">Login</a>
+                        </li>
+                        <li class="nav-item" id="navLogout" style="display:none;">
+                            <a class="nav-link text-dark" href="#" id="btnLogout">Logout</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -47,6 +52,45 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        function getCookie(name) {
+          const row = document.cookie.split('; ').find(r => r.startsWith(name + '='));
+          return row ? decodeURIComponent(row.split('=')[1]) : null;
+        }
+        function eraseCookie(name) {
+          document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+        }
+
+        $(function () {
+          const rolStr = getCookie('id_rol');
+          const idUsuario = getCookie('id_usuario');
+          const rol = parseInt(rolStr || '', 10);
+
+          if (rol === 1) {
+            $('#navUsuarios').show();
+          } else {
+            $('#navUsuarios').hide();
+          }
+
+          if (idUsuario) {
+            $('#navLogout').show();
+            $('#navLogin').hide();
+          } else {
+            $('#navLogout').hide();
+            $('#navLogin').show();
+          }
+
+          $('#btnLogout').on('click', function (e) {
+            e.preventDefault();
+            eraseCookie('id_usuario');
+            eraseCookie('id_rol');
+            sessionStorage.clear();
+            window.location.href = '/Login/Index';
+          });
+        });
+    </script>
+
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
