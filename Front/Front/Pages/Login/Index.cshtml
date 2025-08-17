@@ -1,0 +1,83 @@
+﻿@page
+@model Front.Pages.Login.IndexModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container mt-4" style="max-width:480px;">
+    <h2 class="mb-3">Iniciar Sesión</h2>
+    <div id="err" class="alert alert-danger d-none"></div>
+
+    <form method="post" id="loginForm">
+        <div class="mb-3">
+            <label for="email" class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-control" id="email" name="email" required />
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <input type="password" class="form-control" id="password" name="password" required />
+        </div>
+        <button type="submit" id="btnLogin" class="btn btn-primary w-100">Iniciar Sesión</button>
+        <button type="submit" id="btnRegistrar" class="btn btn-warning w-100">Registrarse</button>
+
+    </form>
+</div>
+
+
+    <script>
+        const API_URL = 'https://localhost:7096/Usuario';
+
+        function setCookie(name, value) {
+            const secure = location.protocol === "https:" ? "; secure" : "";
+            document.cookie = name + "=" + encodeURIComponent(value) + "; path=/; samesite=lax" + secure;
+        }
+
+        function iniciarSesion(correoIngresado, contrasenaIngresada) {
+            let accesoConcedido = false;
+            let usuarioEncontrado = null;
+
+            $.get(API_URL, function (usuarios) {
+                (usuarios || []).forEach(function (u) {
+                    if (
+                        (u.correo || "").toLowerCase() === (correoIngresado || "").toLowerCase() &&
+                        (u.contrasena || "") === (contrasenaIngresada || "")
+                    ) {
+                        accesoConcedido = true;
+                        usuarioEncontrado = u;
+                    }
+                });
+
+                if (accesoConcedido) {
+                    sessionStorage.setItem('userId', usuarioEncontrado.id);
+                    sessionStorage.setItem('userNombre', usuarioEncontrado.nombre);
+                    sessionStorage.setItem('userCorreo', usuarioEncontrado.correo);
+
+                    setCookie('id_usuario', usuarioEncontrado.id);
+                    setCookie('id_rol', usuarioEncontrado.id_rol);
+
+                    window.location.href = '/';
+                } else {
+                    $('#err').removeClass('d-none').text('Datos incorrectos, intente de nuevo');
+                }
+            })
+            .fail(function () {
+                $('#err').removeClass('d-none').text('Error al conectar con la API.');
+            })
+            .always(function () {
+                $('#btnLogin').prop('disabled', false).text('Iniciar Sesión');
+            });
+        }
+
+        $(document).ready(function () {
+            $('#loginForm').on('submit', function (e) {
+                e.preventDefault();
+                $('#err').addClass('d-none').text('');
+                $('#btnLogin').prop('disabled', true).text('Entrando...');
+
+                const correo = $('#email').val();
+                const contrasena = $('#password').val();
+
+                iniciarSesion(correo, contrasena);
+            });
+        });
+    </script>

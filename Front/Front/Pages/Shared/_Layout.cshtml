@@ -7,31 +7,37 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Front.styles.css" asp-append-version="true" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
 </head>
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-page="/Index">Front</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                            <a class="nav-link text-dark" asp-page="/Index">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Usuarios/Index">Usuarios</a>
+                        <li class="nav-item" id="navUsuarios" style="display:none;">
+                            <a class="nav-link text-dark" asp-page="/Usuarios/Index">Usuarios</a>
                         </li>
-
+                        <li class="nav-item" id="navLogin" style="display:none;">
+                            <a class="nav-link text-dark" id="btnLogin" asp-page="/Login/Index">Login</a>
+                        </li>
+                        <li class="nav-item" id="navLogout" style="display:none;">
+                            <a class="nav-link text-dark" href="#" id="btnLogout">Logout</a>
+                        </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -40,13 +46,56 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - Front - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            &copy; 2025 - Front - <a asp-page="/Privacy">Privacy</a>
         </div>
     </footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        function getCookie(name) {
+            const parts = document.cookie.split(';');
+            for (let i = 0; i < parts.length; i++) {
+                const kv = parts[i].split('=');
+                const k = (kv[0] || '').trim();
+                if (k === name) return decodeURIComponent((kv[1] || '').trim());
+            }
+            return null;
+        }
+
+        function expirarCookie(name) {
+            document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/";
+        }
+
+        $(function () {
+            const rolStr = getCookie('id_rol');
+            const idUsuario = getCookie('id_usuario');
+            const rol = parseInt(rolStr || '', 10);
+
+            // Acceso restringido con base en rol 1
+            if (rol === 1) {
+                $('#navUsuarios').show();
+            } else {
+                $('#navUsuarios').hide();
+            }
+
+            // Ocultar o mostrar login con base en cookie
+            if (idUsuario) {
+                $('#navLogout').show();
+                $('#navLogin').hide();
+            } else {
+                $('#navLogout').hide();
+                $('#navLogin').show();
+            }
+
+            // Logout
+            $('#btnLogout').on('click', function (e) {
+                e.preventDefault();
+                expirarCookie('id_usuario');
+                expirarCookie('id_rol');
+                sessionStorage.clear();
+                window.location.href = '/Login/Index';
+            });
+        });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
