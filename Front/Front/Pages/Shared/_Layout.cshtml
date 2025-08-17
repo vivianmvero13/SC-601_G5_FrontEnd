@@ -32,6 +32,9 @@
                         <li class="nav-item" id="navLogout" style="display:none;">
                             <a class="nav-link text-dark" href="#" id="btnLogout">Logout</a>
                         </li>
+                        <li class="nav-item" id="navPerfil" style="display:none;">
+                            <a class="nav-link text-dark" id="btnPerfil" asp-page="/Perfil/Index">Ver Perfil</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -80,9 +83,11 @@
             // Ocultar o mostrar login con base en cookie
             if (idUsuario) {
                 $('#navLogout').show();
+                $('#navPerfil').show();
                 $('#navLogin').hide();
             } else {
                 $('#navLogout').hide();
+                $('#navPerfil').hide();
                 $('#navLogin').show();
             }
 

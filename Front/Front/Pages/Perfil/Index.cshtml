@@ -1,0 +1,183 @@
+﻿@page
+@model Front.Pages.Perfil.IndexModel
+
+@{
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <input type="hidden" id="id" />
+    <input type="hidden" id="id_direccion" />
+    <input type="hidden" id="detalle_original" />
+    <input type="hidden" id="id_distrito_original" />
+    <input type="hidden" id="id_rol" />
+    <input type="hidden" id="id_estado" />
+    <input type="hidden" id="fecha_registro" />
+
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-control" id="nombre" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Correo</label>
+        <input type="text" class="form-control" id="correo" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Contraseña</label>
+        <div class="input-group">
+            <input type="password" class="form-control" id="contrasena" />
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword">Ver</button>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Dirección exacta</label>
+        <input type="text" class="form-control" id="detalle" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">País</label>
+        <select class="form-control" id="id_pais"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Provincia</label>
+        <select class="form-control" id="id_provincia"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantón</label>
+        <select class="form-control" id="id_canton"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Distrito</label>
+        <select class="form-control" id="id_distrito"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Teléfono</label>
+        <input type="text" class="form-control" id="telefono" />
+    </div>
+
+    <button id="modificarDatos" class="btn btn-success">Actualizar</button>
+    <a class="btn btn-warning" asp-area="" asp-page="/">Cancelar</a>
+</div>
+
+<script>
+    const API_URL = 'https://localhost:7096/Usuario';
+    const DIR_URL = 'https://localhost:7096/Direccion';
+
+    $(document).ready(function () {
+        function obtenerUserId() {
+            const value = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('id_usuario='))
+                ?.split('=')[1];
+            return value ? parseInt(value, 10) : null;
+        }
+
+        const id = obtenerUserId();
+
+        $.get(`${API_URL}/${id}`, function (usuario) {
+            $('#id').val(usuario.id);
+            $('#nombre').val(usuario.nombre);
+            $('#correo').val(usuario.correo);
+            $('#contrasena').val(usuario.contrasena);
+            $('#telefono').val(usuario.telefono);
+            $('#id_rol').val(usuario.id_rol);
+            $('#id_estado').val(usuario.id_estado);
+            $('#fecha_registro').val(usuario.fecha_registro);
+
+            $.get(`${DIR_URL}/${usuario.id_direccion}`, function (dir) {
+                $('#id_direccion').val(dir.id);
+                $('#detalle').val(dir.detalle);
+                $('#detalle_original').val(dir.detalle);
+                $('#id_distrito_original').val(dir.id_distrito);
+
+                cargarSelect('#id_pais', `https://localhost:7096/Pais`, dir.id_pais);
+                cargarSelect('#id_provincia', `https://localhost:7096/Provincia?paisId=${dir.id_pais}`, dir.id_provincia);
+                cargarSelect('#id_canton', `https://localhost:7096/Canton?provinciaId=${dir.id_provincia}`, dir.id_canton);
+                cargarSelect('#id_distrito', `https://localhost:7096/Distrito?cantonId=${dir.id_canton}`, dir.id_distrito);
+            });
+        });
+
+        $('#togglePassword').click(function () {
+            const input = $('#contrasena');
+            const type = input.attr("type") === "password" ? "text" : "password";
+            input.attr("type", type);
+            $(this).text(type === "password" ? "Ver" : "Ocultar");
+        });
+
+        $('#modificarDatos').click(function () {
+            const id = $('#id').val();
+            const direccionModificada = $('#detalle').val() !== $('#detalle_original').val() ||
+                                        $('#id_distrito').val() !== $('#id_distrito_original').val();
+
+            if (direccionModificada) {
+                const nuevaDireccion = {
+                    detalle: $('#detalle').val(),
+                    id_pais: $('#id_pais').val(),
+                    id_provincia: $('#id_provincia').val(),
+                    id_canton: $('#id_canton').val(),
+                    id_distrito: $('#id_distrito').val()
+                };
+
+                $.ajax({
+                    url: DIR_URL,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(nuevaDireccion),
+                    success: function (nuevaDir) {
+                        enviarActualizacionUsuario(id, nuevaDir.id);
+                    },
+                    error: function (e) {
+                        console.error("Error al crear nueva dirección:", e);
+                    }
+                });
+            } else {
+                enviarActualizacionUsuario(id, $('#id_direccion').val());
+            }
+        });
+    });
+
+    function enviarActualizacionUsuario(id, idDireccion) {
+        const usuarioActualizado = {
+            id: id,
+            nombre: $('#nombre').val(),
+            correo: $('#correo').val(),
+            contrasena: $('#contrasena').val(),
+            id_direccion: idDireccion,
+            telefono: $('#telefono').val(),
+            id_rol: parseInt($('#id_rol').val(), 10),
+            id_estado: parseInt($('#id_estado').val(), 10),
+            fecha_registro: $('#fecha_registro').val()
+        };
+
+        $.ajax({
+            url: API_URL,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(usuarioActualizado),
+            success: function () {
+                alert("Usuario actualizado correctamente");
+                window.location.href = '/';
+            },
+            error: function (e) {
+                console.error("Error al actualizar usuario:", e);
+            }
+        });
+    }
+
+    function cargarSelect(selector, url, selectedId) {
+        $.get(url, function (data) {
+            $(selector).empty();
+            data.forEach(item => {
+                const selected = item.id === selectedId ? 'selected' : '';
+                $(selector).append(`<option value="${item.id}" ${selected}>${item.nombre}</option>`);
+            });
+        });
+    }
+</script>
