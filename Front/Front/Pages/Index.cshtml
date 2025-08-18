@@ -4,7 +4,23 @@
     ViewData["Title"] = "Menú";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container-fluid px-0">
+    <iframe id="pdfViewer"
+            class="w-100 border-0"
+            src="@Url.Content("~/pdf/menu.pdf")#view=FitH&zoom=page-width"
+            title="Documento PDF">
+    </iframe>
 </div>
+<script>
+    (function () {
+      function resizePdf() {
+        const nav = document.querySelector('nav.navbar');
+        const footer = document.querySelector('footer');
+        const h = window.innerHeight - (nav?.offsetHeight || 0) - (footer?.offsetHeight || 0);
+        const iframe = document.getElementById('pdfViewer');
+        if (iframe) iframe.style.height = (h > 300 ? h : window.innerHeight) + 'px';
+      }
+      window.addEventListener('load', resizePdf);
+      window.addEventListener('resize', resizePdf);
+    })();
+</script>

@@ -3,42 +3,62 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Front</title>
+    <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Front.styles.css" asp-append-version="true" />
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">Front</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Index">Menú</a>
+            <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+                <div class="container">
+                    <a class="navbar-brand d-flex align-items-center" asp-area="" asp-page="/Index">
+                    <img src="~/images/logo.png" alt="Logo" style="height:64px;width:auto;">
+                    </a>
+
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="mainNav">
+                        <ul class="navbar-nav me-auto align-items-center">
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Index">Menú</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Contacto">Contáctanos</a>
+                            </li>
+                        <li class="nav-item dropdown" id="navAdmin" style="display:none;">
+                            <a class="nav-link dropdown-toggle text-dark" id="adminDropdown"
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Administrador
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                <li><a class="dropdown-item" asp-page="/Usuarios/Index">Usuarios</a></li>
+                            </ul>
                         </li>
-                        <li class="nav-item" id="navUsuarios" style="display:none;">
-                            <a class="nav-link text-dark" asp-page="/Usuarios/Index">Usuarios</a>
-                        </li>
-                        <li class="nav-item" id="navLogin" style="display:none;">
-                            <a class="nav-link text-dark" id="btnLogin" asp-page="/Login/Index">Login</a>
-                        </li>
-                        <li class="nav-item" id="navLogout" style="display:none;">
-                            <a class="nav-link text-dark" href="#" id="btnLogout">Logout</a>
-                        </li>
-                        <li class="nav-item" id="navPerfil" style="display:none;">
-                            <a class="nav-link text-dark" id="btnPerfil" asp-page="/Perfil/Index">Ver Perfil</a>
-                        </li>
-                    </ul>
+                            
+                        </ul>
+
+                        <ul class="navbar-nav ms-auto align-items-center">
+                            <li class="nav-item" id="navLogin" style="display:none;">
+                                <a class="nav-link text-dark" id="btnLogin" asp-page="/Login/Index">Login</a>
+                            </li>
+                            <li class="nav-item" id="navLogout" style="display:none;">
+                                <a class="nav-link text-dark" href="#" id="btnLogout">Logout</a>
+                            </li>
+                            <li class="nav-item ms-2" id="navPerfil" style="display:none;">
+                                <a class="nav-link p-0" id="btnPerfil" asp-page="/Perfil/Index">
+                                    <img src="~/images/perfil.png" alt="Perfil" style="height:32px;width:32px;object-fit:cover;border-radius:50%;">
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-        </nav>
+            </nav>
     </header>
 
     <div class="container">
@@ -75,9 +95,9 @@
 
             // Acceso restringido con base en rol 1
             if (rol === 1) {
-                $('#navUsuarios').show();
+                $('#navAdmin').show();
             } else {
-                $('#navUsuarios').hide();
+                $('#navAdmin').hide();
             }
 
             // Ocultar o mostrar login con base en cookie
