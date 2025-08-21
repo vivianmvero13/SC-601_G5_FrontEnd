@@ -1,0 +1,76 @@
+﻿@page
+@model Front.Pages.Promociones.Index1Model
+@{
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <input type="hidden" id="id" />
+
+    <div class="mb-3">
+        <label class="form-label">Descripción</label>
+        <input type="text" class="form-control" id="descripcion" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Descuento (%)</label>
+        <input type="number" class="form-control" id="descuento" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha de Inicio</label>
+        <input type="date" class="form-control" id="fecha_inicio" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha de Fin</label>
+        <input type="date" class="form-control" id="fecha_fin" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Producto</label>
+        <select class="form-control" id="id_producto"></select>
+    </div>
+
+    <button id="guardarDatos" class="btn btn-primary">Guardar</button>
+</div>
+
+<script>
+    const API_URL = 'https://localhost:7096/Promociones';
+    const PRODUCTO_URL = 'https://localhost:7096/Productos';
+
+    $(document).ready(function () {
+        cargarProducto();
+
+        $('#guardarDatos').click(function () {
+            const promocion = {
+                descripcion: $('#descripcion').val(),
+                descuento: parseFloat($('#descuento').val()),
+                fecha_inicio: $('#fecha_inicio').val(),
+                fecha_fin: $('#fecha_fin').val(),
+                id_producto: parseInt($('#id_producto').val())
+            };
+
+            $.ajax({
+                url: API_URL,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(promocion),
+                success: function () {
+                    alert("Promoción creada correctamente");
+                    window.location.href = '/Promociones';
+                },
+                error: function (e) {
+                    console.error("Error al crear la promoción: ", e);
+                }
+            });
+        });
+    });
+
+    function cargarProducto() {
+        $.get(PRODUCTO_URL, function (data) {
+            $('#id_producto').empty().append('<option value="">Seleccione</option>');
+            data.forEach(p => $('#id_producto').append(`<option value="${p.id}">${p.nombre}</option>`));
+        });
+    }
+</script>

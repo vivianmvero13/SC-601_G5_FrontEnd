@@ -48,6 +48,22 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJpdmFjeS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/vivia/Universidad/Progra Avanzada/SC-601_G5_FrontEnd/Front/Front/Pages/Promociones/Crear.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvbW9jaW9uZXNcQ3JlYXIuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/vivia/Universidad/Progra Avanzada/SC-601_G5_FrontEnd/Front/Front/Pages/Promociones/Editar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvbW9jaW9uZXNcRWRpdGFyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/vivia/Universidad/Progra Avanzada/SC-601_G5_FrontEnd/Front/Front/Pages/Promociones/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvbW9jaW9uZXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/vivia/Universidad/Progra Avanzada/SC-601_G5_FrontEnd/Front/Front/Pages/Promociones/IndexAdmin.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvbW9jaW9uZXNcSW5kZXhBZG1pbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/vivia/Universidad/Progra Avanzada/SC-601_G5_FrontEnd/Front/Front/Pages/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 

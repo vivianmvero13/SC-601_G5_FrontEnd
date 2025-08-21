@@ -1,0 +1,53 @@
+﻿@page
+@model Front.Pages.Promociones.IndexModel
+@{
+    Layout = "_Layout";
+}
+
+<h1>Promociones</h1>
+
+<div class="table-responsive mt-4">
+    <table class="table table-primary">
+        <thead>
+            <tr>
+                <th>Promoción</th>
+                <th>Descuento</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Final</th>
+                <th>Producto</th>
+            </tr>
+        </thead>
+        <tbody id="listaDatos"></tbody>
+    </table>
+</div>
+
+<script>
+    const API_URL = 'https://localhost:7096/Promociones';
+    const PRODUCTO_URL = 'https://localhost:7096/Productos';
+
+    function cargarDatos() {
+        $.get(API_URL, function (usuarios) {
+            $("#listaDatos").empty();
+
+            usuarios.forEach(u => {
+                $.get(`${PRODUCTO_URL}/${u.id_producto}`, function (prod) {
+
+                        $("#listaDatos").append(`
+                            <tr>
+                                <td>${u.descripcion}</td>
+                                <td>${u.descuento}</td>
+                                <td>${u.fecha_inicio}</td>
+                                <td>${u.fecha_fin}</td>
+                                <td>${prod.nombre}</td>
+                            </tr>
+                        `);
+                    });
+                });
+        });
+    }
+
+    $(document).ready(function () {
+        cargarDatos();
+    });
+</script>
+
