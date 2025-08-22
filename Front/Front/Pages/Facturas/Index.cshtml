@@ -52,7 +52,7 @@
     </table>
 </div>
 
-<!-- Modal Detalle (reutilizado del cliente) -->
+<!-- Modal Detalle -->
 <div class="modal fade" id="detalleFacturaModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
@@ -96,7 +96,6 @@
 
 @section Scripts {
     <script>
-        // === Endpoints ===
         const API_PRODUCTOS = 'https://localhost:7096/Productos';
         const API_FACTURAS  = 'https://localhost:7096/Facturas';
         const API_DETALLES  = 'https://localhost:7096/DetalleFactura';
@@ -138,7 +137,7 @@
         }
 
 
-        // === Métodos de pago (map id->nombre) ===
+        // === Métodos de pago ===
         let METODOS_MAP = {};
         const METODOS_FALLBACK = { 1: 'Sinpe movil', 2: 'Transferencia', 3: 'Tarjeta' };
 
@@ -200,7 +199,7 @@
           return producto;
         }
 
-        // === Buscar facturas (admin) ===
+        // === Buscar facturas===
         async function buscarFacturas() {
           await cargarMetodosMap();
 
@@ -233,13 +232,11 @@
                 return;
               }
 
-              // 1) Pre-cargar en paralelo los usuarios únicos
               const userIds = [...new Set(
                 data.map(f => f.id_usuario ?? f.idUsuario).filter(Boolean)
               )];
               await Promise.all(userIds.map(id => getUsuarioById(id)));
 
-              // 2) Pintar filas con nombre de usuario y método de pago
               for (const factura of data) {
                 const uid = factura.id_Usuario ?? null;
                 const usuario = uid ? await getUsuarioById(uid) : null;
@@ -351,7 +348,6 @@
 
         // === Eventos de filtros ===
         $(document).ready(function () {
-          // Por comodidad, setear "Hasta" = hoy
           const hoy = new Date().toISOString().slice(0,10);
           $('#fHasta').val(hoy);
 
