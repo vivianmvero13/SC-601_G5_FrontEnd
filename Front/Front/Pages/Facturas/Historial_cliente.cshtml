@@ -74,11 +74,12 @@
 @section Scripts {
     <script>
 
-        const API_URL = 'https://localhost:7096/Usuario';
-        const API_URL = 'https://localhost:7096/Productos';
-        const API_FACTURAS = 'https://localhost:7096/Facturas';
-        const API_DETALLES = 'https://localhost:7096/DetalleFactura';
-        const API_METODOS = 'https://localhost:7096/MetodoPago';
+        const API_USUARIOS  = 'https://localhost:7096/Usuario';
+        const API_PRODUCTOS = 'https://localhost:7096/Productos';
+        const API_FACTURAS  = 'https://localhost:7096/Facturas';
+        const API_DETALLES  = 'https://localhost:7096/DetalleFactura';
+        const API_METODOS   = 'https://localhost:7096/MetodoPago';
+
 
         // === Mapeo de métodos de pago ===
         let METODOS_MAP = {};
@@ -194,32 +195,31 @@
         // === Cache y helper para Productos ===
         const PRODUCTOS_CACHE = new Map();
 
-        async function getProductoById(idProducto) {
-            if (!idProducto) return null;
-            if (PRODUCTOS_CACHE.has(idProducto)) return PRODUCTOS_CACHE.get(idProducto);
+                async function getProductoById(idProducto) {
+          if (!idProducto) return null;
+          if (PRODUCTOS_CACHE.has(idProducto)) return PRODUCTOS_CACHE.get(idProducto);
 
-            let producto = null;
-            try {
-                producto = await $.getJSON(`${API_URL}/${idProducto}`);
-                if (Array.isArray(producto)) {
-                    producto = producto.find(p => (p.id ?? p.Id) == idProducto) ?? producto[0] ?? null;
-                }
-            } catch {
-
-                try {
-                    producto = await $.getJSON(`${API_URL}/GetById/${idProducto}`);
-                } catch {
-                    try {
-                        producto = await $.getJSON(`${API_URL}?id=${idProducto}`);
-                        if (Array.isArray(producto)) {
-                            producto = producto.find(p => (p.id ?? p.Id) == idProducto) ?? producto[0] ?? null;
-                        }
-                    } catch { producto = null; }
-                }
+          let producto = null;
+          try {
+            producto = await $.getJSON(`${API_PRODUCTOS}/${idProducto}`);
+            if (Array.isArray(producto)) {
+              producto = producto.find(p => (p.id ?? p.Id) == idProducto) ?? producto[0] ?? null;
             }
+          } catch {
+            try {
+              producto = await $.getJSON(`${API_PRODUCTOS}/GetById/${idProducto}`);
+            } catch {
+              try {
+                producto = await $.getJSON(`${API_PRODUCTOS}?id=${idProducto}`);
+                if (Array.isArray(producto)) {
+                  producto = producto.find(p => (p.id ?? p.Id) == idProducto) ?? producto[0] ?? null;
+                }
+              } catch { producto = null; }
+            }
+          }
 
-            PRODUCTOS_CACHE.set(idProducto, producto);
-            return producto;
+          PRODUCTOS_CACHE.set(idProducto, producto);
+          return producto;
         }
 
 

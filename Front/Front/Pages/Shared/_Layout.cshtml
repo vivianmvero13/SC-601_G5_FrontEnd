@@ -31,30 +31,39 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-page="/Contacto">Contáctanos</a>
                             </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Promociones/Index">Promociones</a>
-                        </li>
-                        <li class="nav-item" id="navReservacionCliente">
-                            <a class="nav-link text-dark" asp-page="/Reservas/ReservacionCliente">Reservaciones</a>
-                        </li>
-                        <li class="nav-item" id="navResenasCliente">
-                            <a class="nav-link text-dark" asp-page="/Resenas/Cliente">Reseñas</a>
-                        </li>
+                            <li class="nav-item" id="navComprasCliente">
+                                <a class="nav-link text-dark" asp-page="/Productos/Index">Productos</a>
+                            </li>
+                            <li class="nav-item" id="navPromocionesCliente">
+                                <a class="nav-link text-dark" asp-page="/Promociones/Index">Promociones</a>
+                            </li>
+                            <li class="nav-item" id="navReservacionCliente">
+                                <a class="nav-link text-dark" asp-page="/Reservas/ReservacionCliente">Reservaciones</a>
+                            </li>
+                            <li class="nav-item" id="navResenasCliente">
+                                <a class="nav-link text-dark" asp-page="/Resenas/Cliente">Reseñas</a>
+                            </li>
+                            <li class="nav-item" id="navHistorialCliente">
+							    <a class="nav-link text-dark" asp-page="/Facturas/Historial_cliente">Historial Pedidos</a>
+                            </li>
 
-                        <li class="nav-item dropdown" id="navAdmin" style="display:none;">
-                            <a class="nav-link dropdown-toggle text-dark" id="adminDropdown"
-                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Administrador
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-                                <li><a class="dropdown-item" asp-page="/Usuarios/Index">Usuarios</a></li>
-                                <li><a class="dropdown-item" asp-page="/Inventario/Index">Inventario</a></li>
-                                <li><a class="dropdown-item" asp-page="/Proveedor/Proveedor">Proveedores</a></li>
-                                <li><a class="dropdown-item" asp-page="/Reservas/Reservacion">Reservaciones</a></li>
-                                <li><a class="dropdown-item" asp-page="/Resenas/Admin">Reseñas</a></li>
-                                <li><a class="nav-link text-dark" asp-page="/Promociones/IndexAdmin">Promociones</a></li>
-                            </ul>
-                        </li>
+                            <li class="nav-item dropdown" id="navAdmin" style="display:none;">
+                                <a class="nav-link dropdown-toggle text-dark" id="adminDropdown"
+                                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Administrador
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                    <li><a class="dropdown-item" asp-page="/Usuarios/Index">Usuarios</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Inventario/Index">Inventario</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Proveedor/Proveedor">Proveedores</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Reservas/Reservacion">Reservaciones</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Productos/Administrar">Productos</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Facturas/Index">Facturas</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Facturas/Reporte">Reportes</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Resenas/Admin">Reseñas</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Promociones/IndexAdmin">Promociones</a></li>
+                                </ul>
+                            </li>
                             
                         </ul>
 
@@ -84,9 +93,10 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - Front - <a asp-page="/Privacy">Privacy</a>
+            &copy; 2025 Estación Espresso. Todos los derechos reservados.
         </div>
     </footer>
+
 
     <script>
         function getCookie(name) {
@@ -111,12 +121,23 @@
             // Acceso restringido con base en rol 1
             if (rol === 1) {
                 $('#navAdmin').show();
-                $('#navResenasCliente').hide();
-                $('#navReservacionCliente').hide();
             } else {
                 $('#navAdmin').hide();
-                 $('#navResenasCliente').show();
-                 $('#navReservacionCliente').show();
+            }
+
+            if (rol === 2) {
+                $('#navResenasCliente').show();
+                $('#navReservacionCliente').show();
+				$('#navComprasCliente').show();
+				$('#navPromocionesCliente').show();
+				$('#navHistorialCliente').show();
+
+			} else {
+                $('#navResenasCliente').hide();
+                $('#navReservacionCliente').hide();
+				$('#navComprasCliente').hide();
+				$('#navPromocionesCliente').hide();
+				$('#navHistorialCliente').hide();
             }
 
             // Ocultar o mostrar login con base en cookie
