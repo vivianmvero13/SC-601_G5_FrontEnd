@@ -20,3 +20,22 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+#offcanvasCart {
+    --bs-offcanvas-width: min(95vw, 720px);
+}
+
+    #offcanvasCart .cart-img {
+        width: 72px;
+        height: 72px;
+        object-fit: cover;
+    }
+
+    #offcanvasCart .cart-qty {
+        width: 90px;
+    }
+
+    #offcanvasCart .cart-subtotal {
+        min-width: 140px;
+    }
+

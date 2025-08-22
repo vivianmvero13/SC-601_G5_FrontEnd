@@ -1,0 +1,651 @@
+﻿@page
+@model Front.Pages.Productos.IndexModel
+
+@{
+    Layout = "_Layout";
+}
+
+<h1 class="text-center">Productos</h1>
+
+<!-- Barra de filtros -->
+<div class="container mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Categoría</label>
+            <select class="form-select" id="filtroCategoria">
+                <option value="">Todas</option>
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="filtroNombre" placeholder="Buscar por nombre...">
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+            <button class="btn btn-primary" id="btnFiltrar">Filtrar</button>
+            <button class="btn btn-outline-secondary" id="btnLimpiar">Limpiar</button>
+
+            <!-- Botón carrito (abre offcanvas) -->
+            <button class="btn btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
+                Carrito <span class="position-absolute top-0 start-100 translate-middle rounded-pill badge bg-danger text-white" id="cartCount">0</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de productos -->
+<div class="container">
+    <div class="row" id="listaProductos"></div>
+</div>
+
+<!-- Offcanvas Carrito -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasCart" aria-labelledby="offcanvasCartLabel" style="--bs-offcanvas-width: 600px;">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasCartLabel">Tu carrito</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+        <ul class="list-group mb-3 flex-grow-1 overflow-auto" id="carritoLista"></ul>
+
+        <div class="border-top pt-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <strong>Total</strong>
+                <strong id="cartTotal">₡0,00</strong>
+            </div>
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-outline-danger flex-grow-1" id="btnVaciar">Vaciar</button>
+                <button class="btn btn-success flex-grow-1" id="btnCheckout">Ir a pagar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pago -->
+<div class="modal fade" id="modalPago" tabindex="-1" aria-labelledby="modalPagoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPagoLabel">Confirmar pago</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formPago" novalidate>
+                    <div class="mb-3">
+                        <label class="form-label">Método de pago</label>
+                        <select id="metodoPago" class="form-select" required>
+                            <!-- se llena desde API o fallback -->
+                        </select>
+                        <div class="invalid-feedback">Selecciona un método de pago.</div>
+                    </div>
+
+                    <!-- Campos Tarjeta -->
+                    <div id="grupoTarjeta" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label">Número de tarjeta</label>
+                            <input type="text" inputmode="numeric" autocomplete="cc-number" class="form-control" id="cc_numero" maxlength="19" placeholder="•••• •••• •••• ••••">
+                            <div class="invalid-feedback">Ingresa un número de tarjeta válido.</div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label">Expiración (MM/AA)</label>
+                                <input type="text" inputmode="numeric" autocomplete="cc-exp" class="form-control" id="cc_exp" placeholder="MM/AA" maxlength="5">
+                                <div class="invalid-feedback">Fecha inválida o vencida.</div>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">CVV</label>
+                                <input type="password" inputmode="numeric" autocomplete="cc-csc" class="form-control" id="cc_cvv" maxlength="4" placeholder="***">
+                                <div class="invalid-feedback">CVV inválido.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos SINPE / Transferencia -->
+                    <div id="grupoTransfer" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label">Número de transferente</label>
+                            <input type="text" inputmode="numeric" class="form-control" id="ref_transfer" placeholder="Número de teléfono SINPE o referencia">
+                            <div class="invalid-feedback">Ingresa un número válido (solo dígitos).</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Nota para la factura (opcional)</label>
+                        <textarea id="notaCliente" class="form-control" rows="2" maxlength="500" placeholder="Indicaciones, comentarios, etc."></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmarPago">Confirmar y pagar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const API_URL = 'https://localhost:7096/Productos';
+    const API_CATEGORIAS = 'https://localhost:7096/CategoriaProductos';
+    const API_PROMOS = 'https://localhost:7096/Promociones';
+    const API_FACTURAS = 'https://localhost:7096/Facturas';
+    const API_DETALLES = 'https://localhost:7096/DetalleFactura';
+    const API_METODOS = 'https://localhost:7096/MetodosPago'; 
+
+
+    const PLACEHOLDER = "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png";
+    const esUrlImagen = (v) => typeof v === "string" && /^(https?:\/\/|data:image\/)/i.test(v?.trim?.() ?? "");
+    const fmtCRC = new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', minimumFractionDigits: 2 });
+
+    let promosActivasPorProducto = {}; 
+
+    function aTasa(desc) {
+      let d = Number(desc);
+      if (!isFinite(d) || d <= 0) return 0;
+      if (d > 1) d = d / 100;     
+      return Math.min(Math.max(d, 0), 0.99);
+    }
+    function parseDateOnly(s) { if (!s) return null; return new Date(`${s}T00:00:00`); }
+    function finDeDia(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999); }
+
+    function cargarPromociones() {
+      return $.ajax({
+        url: API_PROMOS,
+        method: 'GET',
+        success: function (promos) {
+          const now = new Date();
+          const map = {};
+          (promos || []).forEach(pr => {
+            const ini = parseDateOnly(pr.fecha_inicio);
+            const fin = parseDateOnly(pr.fecha_fin);
+            const activa = ini && fin && now >= ini && now <= finDeDia(fin);
+            const rate = aTasa(pr.descuento);
+            if (!activa || rate <= 0) return;
+            const prev = map[pr.id_producto];
+            if (!prev || rate > prev.rate) {
+              map[pr.id_producto] = { ...pr, rate, pct: Math.round(rate * 100) };
+            }
+          });
+          promosActivasPorProducto = map;
+        }
+      });
+    }
+
+    // ========= Carrito (guardado local) =========
+    const CART_KEY = 'carrito_v1';
+
+    function loadCart() {
+      try {
+        const raw = localStorage.getItem(CART_KEY);
+        return raw ? JSON.parse(raw) : { items: [], nota_cliente: "", id_metodo_pago: null, id_usuario: null };
+      } catch {
+        return { items: [], nota_cliente: "", id_metodo_pago: null, id_usuario: null };
+      }
+    }
+    function saveCart(cart) { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }
+
+    function findIndex(cart, productId) {
+      return cart.items.findIndex(x => String(x.id_producto) === String(productId));
+    }
+
+    function addToCart(producto, cantidad = 1, promoRate = 0) {
+      const cart = loadCart();
+      const idx = findIndex(cart, producto.id);
+      const precio = Number(producto.precio) || 0;
+      const descuento = Math.max(0, Math.min(1, Number(promoRate) || 0));
+      const precio_final = +(precio * (1 - descuento)).toFixed(2);
+
+      if (idx >= 0) {
+        cart.items[idx].cantidad += cantidad;
+        cart.items[idx].subtotal = +(cart.items[idx].precio_unitario * cart.items[idx].cantidad).toFixed(2);
+      } else {
+        cart.items.push({
+          id_producto: producto.id,
+          nombre: producto.nombre,
+          imagen: producto.imagen || null,
+          precio_unitario: precio_final,
+          descuento_aplicado: descuento,
+          cantidad: cantidad,
+          subtotal: +(precio_final * cantidad).toFixed(2)
+        });
+      }
+      saveCart(cart);
+      renderCartMini();
+    }
+
+    function updateQty(productId, qty) {
+      const cart = loadCart();
+      const idx = findIndex(cart, productId);
+      if (idx === -1) return;
+      cart.items[idx].cantidad = Math.max(1, parseInt(qty || 1));
+      cart.items[idx].subtotal = +(cart.items[idx].precio_unitario * cart.items[idx].cantidad).toFixed(2);
+      saveCart(cart);
+      renderCartMini();
+    }
+    function removeFromCart(productId) {
+      const cart = loadCart();
+      cart.items = cart.items.filter(x => String(x.id_producto) !== String(productId));
+      saveCart(cart);
+      renderCartMini();
+    }
+    function clearCart() { saveCart({ items: [], nota_cliente: "", id_metodo_pago: null, id_usuario: null }); renderCartMini(); }
+
+    function cartTotals() {
+      const cart = loadCart();
+      const total = +(cart.items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0)).toFixed(2);
+      const unidades = cart.items.reduce((s, it) => s + (Number(it.cantidad) || 0), 0);
+      return { total, unidades };
+    }
+
+    function renderCartMini() {
+      const cart = loadCart();
+      const { total, unidades } = cartTotals();
+
+      if ($('#cartTotal').length) $('#cartTotal').text(fmtCRC.format(total));
+      if ($('#cartCount').length) $('#cartCount').text(unidades);
+
+      const $l = $('#carritoLista');
+      if (!$l.length) return;
+
+      $l.empty();
+      if (cart.items.length === 0) {
+        $l.append('<li class="list-group-item">Carrito vacío</li>');
+        return;
+      }
+
+        cart.items.forEach(it => {
+          const descPct = Math.round((it.descuento_aplicado || 0) * 100);
+
+          $l.append(`
+            <li class="list-group-item">
+              <div class="row align-items-center g-2">
+                <!-- Imagen -->
+                <div class="col-auto">
+                  <img
+                    src="${esUrlImagen(it.imagen) ? it.imagen : PLACEHOLDER}"
+                    alt=""
+                    class="rounded cart-img"
+                    onerror="this.onerror=null;this.src='${PLACEHOLDER}'" />
+                </div>
+
+                <!-- Nombre + precio unitario + badge de descuento -->
+                <div class="col">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="fw-semibold cart-item-name">${it.nombre}</div>
+                    ${descPct > 0 ? `<span class="badge bg-danger">-${descPct}%</span>` : ""}
+                  </div>
+                  <div class="small text-muted">${fmtCRC.format(it.precio_unitario)} c/u</div>
+                </div>
+
+                <!-- Cantidad + Subtotal + Quitar -->
+                <div class="col-12 col-md-5">
+                  <div class="d-flex flex-wrap justify-content-md-end align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-1">
+                      <button class="btn btn-sm btn-outline-secondary cart-minus" data-id="${it.id_producto}">−</button>
+                      <input type="number" min="1"
+                             class="form-control form-control-sm cart-qty text-center"
+                             value="${it.cantidad}" data-id="${it.id_producto}">
+                      <button class="btn btn-sm btn-outline-secondary cart-plus" data-id="${it.id_producto}">+</button>
+                    </div>
+
+                    <div class="text-end ms-auto ms-md-0 cart-subtotal">
+                      <div class="fw-semibold">${fmtCRC.format(it.subtotal)}</div>
+                      <button class="btn btn-sm btn-outline-danger mt-1 cart-remove" data-id="${it.id_producto}">Quitar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </li>
+          `);
+        });
+
+    }
+
+    // ========= UI Productos =========
+    function cargarDatos({ categoriaId = null, q = '' } = {}) {
+      let url = API_URL;
+      const params = new URLSearchParams();
+      if (categoriaId !== null && categoriaId !== '') params.set('categoriaId', categoriaId);
+      if (typeof q === 'string' && q.trim() !== '') params.set('q', q.trim());
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
+
+      $.ajax({
+        url,
+        method: 'GET',
+        success: function (productos) {
+          const contenedor = $("#listaProductos");
+          contenedor.empty();
+
+          if (!productos || productos.length === 0) {
+            contenedor.append(`
+              <div class="col-12"><div class="alert alert-info mb-0">
+                No se encontraron productos con los filtros seleccionados.
+              </div></div>
+            `);
+            return;
+          }
+
+          productos.forEach(p => {
+            const imgSrc = esUrlImagen(p.imagen) ? p.imagen.trim() : PLACEHOLDER;
+
+            const promo = promosActivasPorProducto[p.id];
+            const precioNum = Number(p.precio) || 0;
+
+            let precioHtml;
+            let badgeHtml = '';
+            let promoRate = 0;
+
+            if (promo) {
+              promoRate = promo.rate;
+              const precioFinal = Math.max(0, +(precioNum * (1 - promo.rate)).toFixed(2));
+              badgeHtml = `<span class="badge bg-danger position-absolute top-0 start-0 m-2">-${promo.pct}%</span>`;
+              precioHtml = `
+                <p class="card-text mb-1">
+                  <b>Precio:</b>
+                  <span class="text-muted text-decoration-line-through me-2">${fmtCRC.format(precioNum)}</span>
+                  <span class="fw-bold text-success">${fmtCRC.format(precioFinal)}</span>
+                </p>
+                <p class="card-text text-danger small mb-0">${promo.descripcion ?? ''}</p>
+              `;
+            } else {
+              precioHtml = `<p class="card-text"><b>Precio: </b>${fmtCRC.format(precioNum)}</p>`;
+            }
+
+            contenedor.append(`
+              <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm position-relative">
+                  ${badgeHtml}
+                  <img class="card-img-top"
+                       alt="${p.nombre || 'Producto'}"
+                       src="${imgSrc}"
+                       style="height:220px;object-fit:cover;"
+                       onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title text-center fw-bold">${p.nombre}</h5>
+                    <p class="card-text flex-grow-1"><b>Descripción: </b>${p.descripcion ?? ''}</p>
+                    ${precioHtml}
+                  </div>
+                  <div class="d-flex justify-content-center align-items-center gap-2 mt-2 card-footer">
+                      <input type="number" min="1" value="1" class="form-control form-control-sm qty-input text-center" style="width:90px;">
+                      <button class="btn btn-success btn-agregar"
+                              data-id="${p.id}"
+                              data-nombre="${(p.nombre ?? '').replace(/"/g,'&quot;')}"
+                              data-precio="${p.precio}"
+                              data-imagen="${(p.imagen ?? '').replace(/"/g,'&quot;')}"
+                              data-promorate="${promoRate}">
+                        Agregar al carrito
+                      </button>
+                  </div>
+                </div>
+              </div>
+            `);
+          });
+        },
+        error: function () { alert("Error al cargar productos"); }
+      });
+    }
+
+    // ========= Filtros & Categorías =========
+    function cargarCategorias() {
+      return $.ajax({
+        url: API_CATEGORIAS,
+        method: 'GET',
+        success: function (categorias) {
+          const selFiltro = $('#filtroCategoria');
+          selFiltro.find('option:not([value=""])').remove();
+          categorias.forEach(c => selFiltro.append(`<option value="${c.id}">${c.nombre}</option>`));
+        },
+        error: function () { alert("Error al cargar categorías."); }
+      });
+    }
+
+    $('#btnFiltrar').on('click', function () {
+      const categoriaId = $('#filtroCategoria').val();
+      const q = $('#filtroNombre').val();
+      cargarDatos({ categoriaId, q });
+    });
+    $('#btnLimpiar').on('click', function () {
+      $('#filtroCategoria').val('');
+      $('#filtroNombre').val('');
+      cargarDatos();
+    });
+    $('#filtroNombre').on('keyup', function (e) { if (e.key === 'Enter') $('#btnFiltrar').click(); });
+    $('#filtroCategoria').on('change', () => $('#btnFiltrar').click());
+
+    // ========= Eventos Carrito =========
+    $(document).on('click', '.btn-agregar', function () {
+      const d = $(this).data();
+      const qty = Math.max(1, parseInt($(this).closest('.card').find('.qty-input').val() || 1));
+      const producto = { id: d.id, nombre: d.nombre, precio: Number(d.precio), imagen: d.imagen };
+      const promoRate = Number(d.promorate) || 0;
+      addToCart(producto, qty, promoRate);
+
+      const offcanvasEl = document.getElementById('offcanvasCart');
+      if (offcanvasEl) {
+        const oc = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+        oc.show();
+      }
+    });
+
+    $(document).on('click', '.cart-minus', function () {
+      const id = $(this).data('id'); const input = $(this).siblings('.cart-qty');
+      input.val(Math.max(1, parseInt(input.val() || 1) - 1)).trigger('change');
+    });
+    $(document).on('click', '.cart-plus', function () {
+      const id = $(this).data('id'); const input = $(this).siblings('.cart-qty');
+      input.val(Math.max(1, parseInt(input.val() || 1) + 1)).trigger('change');
+    });
+    $(document).on('change', '.cart-qty', function () {
+      const id = $(this).data('id'); const qty = $(this).val();
+      updateQty(id, qty);
+    });
+    $(document).on('click', '.cart-remove', function () {
+      removeFromCart($(this).data('id'));
+    });
+    $('#btnVaciar').on('click', clearCart);
+
+    // ========= Checkout (opcional directo desde aquí) =========
+    $('#btnCheckout').on('click', async function () {
+      const cart = loadCart();
+      if (!cart.items.length) { alert('El carrito está vacío'); return; }
+
+      // Ejemplo mínimo de POST. Ajusta según tu API real:
+      const dto = {
+        id_usuario: 1,          // pon el usuario actual
+        id_metodo_pago: 1,      // pon lo que corresponda
+        nota_cliente: cart.nota_cliente || '',
+        lineas: cart.items.map(it => ({
+          id_producto: it.id_producto,
+          cantidad: it.cantidad,
+          precio_unitario: it.precio_unitario,
+          subtotal: it.subtotal
+        }))
+      };
+
+      $.ajax({
+        url: API_FACTURAS,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(dto),
+        success: function (resp) {
+          clearCart();
+          alert('¡Tu pedido fue registrado!'); 
+        },
+        error: function (xhr) {
+          console.error(xhr?.responseText || xhr);
+          alert('Ocurrió un error al procesar el pago.');
+        }
+      });
+    });
+
+    function cargarMetodosPago() {
+      // fallback si el endpoint no existe: [1 Sinpe, 2 Transferencia, 3 Tarjeta]
+      const fallback = [
+        { id: 1, nombre: 'Sinpe movil' },
+        { id: 2, nombre: 'Transferencia' },
+        { id: 3, nombre: 'Tarjeta' }
+      ];
+
+      return $.ajax({
+        url: API_METODOS,
+        method: 'GET'
+      }).then(metodos => {
+        const sel = $('#metodoPago').empty();
+        (metodos && metodos.length ? metodos : fallback).forEach(m =>
+          sel.append(`<option value="${m.id}">${m.nombre}</option>`));
+        // dispara cambio para mostrar campos correctos
+        $('#metodoPago').trigger('change');
+      }).catch(() => {
+        const sel = $('#metodoPago').empty();
+        fallback.forEach(m => sel.append(`<option value="${m.id}">${m.nombre}</option>`));
+        $('#metodoPago').trigger('change');
+      });
+    }
+
+    $('#metodoPago').on('change', function () {
+      const id = Number($(this).val());
+      const isTarjeta = id === 3;
+      const isTransfer = id === 1 || id === 2; // SINPE o Transferencia
+      $('#grupoTarjeta').toggleClass('d-none', !isTarjeta);
+      $('#grupoTransfer').toggleClass('d-none', !isTransfer);
+    });
+
+        // Limpia espacios y no-dígitos
+    function onlyDigits(s) { return (s || '').replace(/\D+/g, ''); }
+
+    // Luhn para tarjeta
+    function isValidCard(num) {
+      const s = onlyDigits(num);
+      if (s.length < 13 || s.length > 19) return false;
+      let sum = 0, alt = false;
+      for (let i = s.length - 1; i >= 0; i--) {
+        let n = parseInt(s[i], 10);
+        if (alt) { n *= 2; if (n > 9) n -= 9; }
+        sum += n; alt = !alt;
+      }
+      return sum % 10 === 0;
+    }
+
+    function isValidCVV(v) {
+      const s = onlyDigits(v);
+      return s.length === 3 || s.length === 4;
+    }
+
+    function isValidExp(mmYY) {
+      const m = (mmYY || '').trim();
+      if (!/^\d{2}\/\d{2}$/.test(m)) return false;
+      const [mm, yy] = m.split('/').map(x => parseInt(x, 10));
+      if (mm < 1 || mm > 12) return false;
+      const year = 2000 + yy;
+      const exp = new Date(year, mm, 0, 23, 59, 59); // fin del mes
+      const now = new Date();
+      return exp >= now;
+    }
+
+    function isValidTransferRef(v) {
+      const s = onlyDigits(v);
+      return s.length >= 6 && s.length <= 20; // rango flexible
+    }
+
+        $('#btnCheckout').off('click').on('click', function () {
+      const cart = loadCart();
+      if (!cart.items.length) { alert('El carrito está vacío'); return; }
+      $('#formPago')[0].reset();
+      $('#formPago .is-invalid').removeClass('is-invalid');
+      cargarMetodosPago().then(() => {
+        const m = new bootstrap.Modal(document.getElementById('modalPago'));
+        m.show();
+      });
+    });
+
+        $('#btnConfirmarPago').on('click', function () {
+      const cart = loadCart();
+      if (!cart.items.length) { alert('El carrito está vacío'); return; }
+
+      const metodoId = Number($('#metodoPago').val());
+      const nota = $('#notaCliente').val() || '';
+
+      // limpiar estados invalid
+      $('#formPago .is-invalid').removeClass('is-invalid');
+
+      // Validaciones según método
+      let valido = true;
+      if (metodoId === 3) {
+        if (!isValidCard($('#cc_numero').val())) { $('#cc_numero').addClass('is-invalid'); valido = false; }
+        if (!isValidExp($('#cc_exp').val())) { $('#cc_exp').addClass('is-invalid'); valido = false; }
+        if (!isValidCVV($('#cc_cvv').val())) { $('#cc_cvv').addClass('is-invalid'); valido = false; }
+      } else if (metodoId === 1 || metodoId === 2) {
+        if (!isValidTransferRef($('#ref_transfer').val())) { $('#ref_transfer').addClass('is-invalid'); valido = false; }
+      } else {
+        // Si llegara un método desconocido, exige selección
+        $('#metodoPago').addClass('is-invalid'); valido = false;
+      }
+
+      if (!valido) return;
+
+      // OK: preparar datos para el API (sin datos sensibles)
+      const { total } = cartTotals();
+      const fecha = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const facturaDto = {
+        fecha: fecha,
+        total: total,
+        id_usuario: 1,            // Ajusta con el usuario logueado
+        id_metodo_pago: metodoId,
+        nota_cliente: nota
+      };
+
+      // 1) Crear factura
+      $.ajax({
+        url: API_FACTURAS,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(facturaDto),
+        success: function (facturaCreada) {
+          // Soportar respuesta con objeto o solo {id: ...}
+          const facturaId = facturaCreada?.id ?? facturaCreada?.factura?.id ?? facturaCreada;
+
+          if (!facturaId) {
+            alert('No se pudo obtener el ID de la factura creada.');
+            return;
+          }
+
+          // 2) Crear detalles (uno por item)
+          const requests = loadCart().items.map(it => $.ajax({
+            url: API_DETALLES,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+              cantidad: it.cantidad,
+              subtotal: it.subtotal,
+              id_factura: facturaId,
+              id_producto: it.id_producto
+            })
+          }));
+
+          $.when.apply($, requests).then(function () {
+            // Éxito: limpiar carrito, cerrar modal, feedback
+            clearCart();
+            const modalEl = document.getElementById('modalPago');
+            bootstrap.Modal.getInstance(modalEl)?.hide();
+            alert('¡Pago confirmado y factura generada!');
+          }).fail(function (xhr) {
+            console.error(xhr?.responseText || xhr);
+            alert('Ocurrió un error al registrar el detalle de la factura.');
+          });
+        },
+        error: function (xhr) {
+          console.error(xhr?.responseText || xhr);
+          alert('Ocurrió un error al crear la factura.');
+        }
+      });
+    });
+
+
+    // ========= Init =========
+    $(document).ready(function () {
+      renderCartMini(); 
+      $.when(cargarCategorias(), cargarPromociones())
+        .then(() => cargarDatos());
+    });
+
+</script>
