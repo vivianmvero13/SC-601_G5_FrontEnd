@@ -1,0 +1,155 @@
+﻿@page
+@model Front.Pages.Reservas.ReservacionClienteModel
+@{
+}
+
+<div class="card shadow p-4 mb-4 rounded-3">
+    <h5 class="mb-3 text-info">Realizar una Reserva</h5>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Usuario</label>
+            <input type="text" class="form-control" id="nombre_usuario" readonly>
+            <input type="hidden" id="id_usuario"> 
+        </div>
+
+        <div class="col-md-6">
+            <label for="fecha_reserva" class="form-label fw-bold">Fecha de Reserva</label>
+            <input type="date" class="form-control" id="fecha_reserva">
+        </div>
+
+        <div class="col-md-6">
+            <label for="id_metodo_pago" class="form-label fw-bold">Método de Pago</label>
+            <select class="form-select" id="id_metodo_pago"></select>
+        </div>
+
+        <div class="col-md-12">
+            <label for="nota_cliente" class="form-label fw-bold">Nota</label>
+            <textarea class="form-control" id="nota_cliente" rows="2" placeholder="Observaciones opcionales"></textarea>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a id="guardarReserva" class="btn btn-primary w-100">Reservar</a>
+    </div>
+</div>
+
+<h1 class="text-center my-4">Mis Reservas</h1>
+<div class="card shadow rounded-3">
+    <div class="card-header bg-info text-white fw-bold text-center">
+      Reservas del Cliente
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha Reserva</th>
+                    <th>Método Pago</th>
+                    <th>Nota</th>
+                </tr>
+            </thead>
+            <tbody id="listaReservasCliente">
+               
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const API_RESERVAS = 'https://localhost:7096/Reservas';
+    const API_METODO = 'https://localhost:7096/MetodoPago';
+
+    let metodos = [];
+
+    function getSessionUser() {
+        return {
+            id: parseInt(sessionStorage.getItem("userId")),
+            nombre: sessionStorage.getItem("userNombre"),
+            correo: sessionStorage.getItem("userCorreo")
+        };
+    }
+
+    const cliente = getSessionUser();
+
+    if (!cliente.id) {
+        alert("Debes iniciar sesión para acceder a tus reservas.");
+        window.location.href = "/Login";
+    }
+
+    function cargarMetodoPago() {
+        $.get(API_METODO, function(data) {
+            metodos = data;
+            $("#id_metodo_pago").empty().append('<option value="">Seleccione Método de Pago</option>');
+            metodos.forEach(m => {
+                $("#id_metodo_pago").append(`<option value="${m.id}">${m.nombre}</option>`);
+            });
+        });
+    }
+
+    function cargarReservasCliente(){
+        $.ajax({
+            url: API_RESERVAS,
+            method: 'GET',
+            success: function(dato){
+                $("#listaReservasCliente").empty();
+
+                const reservasCliente = dato.filter(r => r.id_usuario === cliente.id);
+
+                reservasCliente.forEach(item => {
+                    const metodoNombre = metodos.find(m => m.id === item.id_metodo_pago)?.nombre || "N/A";
+
+                    $("#listaReservasCliente").append(`
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.fecha_reserva}</td>
+                            <td>${metodoNombre}</td>
+                            <td>${item.nota_cliente}</td>
+                        </tr>
+                    `);
+                });
+            },
+            error: function(xhr, status, error){
+                console.error("Error: " + error);
+            }
+        });
+    }
+
+    $("#guardarReserva").click(function() {
+        const item = {
+            id: 0,
+            fecha_reserva: $('#fecha_reserva').val(),
+            id_usuario: cliente.id,
+            id_estado: 1, 
+            id_metodo_pago: parseInt($('#id_metodo_pago').val()),
+            nota_cliente: $('#nota_cliente').val()
+        };
+
+        $.ajax({
+            url: API_RESERVAS,
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            success: function(){
+                alert("Reserva realizada con éxito");
+                cargarReservasCliente();
+                $('#fecha_reserva').val("");
+                $('#id_metodo_pago').val("");
+                $('#nota_cliente').val("");
+            },
+            error: function(xhr, status, error){
+                console.error("Error: " + error);
+                alert("Error al realizar la reserva");
+            }
+        });
+    });
+
+    $(document).ready(function(){
+        
+        $("#nombre_usuario").val(cliente.nombre);
+        $("#id_usuario").val(cliente.id);
+
+        cargarMetodoPago();
+
+        setTimeout(cargarReservasCliente, 500);
+    });
+</script>
