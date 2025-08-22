@@ -21,12 +21,12 @@
             <input type="text" class="form-control" id="filtroNombre" placeholder="Buscar por nombre...">
         </div>
         <div class="col-md-4 d-flex gap-2">
-            <button class="btn btn-primary" id="btnFiltrar">Filtrar</button>
+            <button class="btn btn-primary" id="btnFiltrar">Buscar 🔍 </button>
             <button class="btn btn-outline-secondary" id="btnLimpiar">Limpiar</button>
 
             <!-- Botón carrito (abre offcanvas) -->
             <button class="btn btn btn-primary position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-controls="offcanvasCart">
-                Carrito <span class="position-absolute top-0 start-100 translate-middle rounded-pill badge bg-danger text-white" id="cartCount">0</span>
+                Carrito 🛒 <span class="position-absolute top-0 start-100 translate-middle rounded-pill badge bg-danger text-white" id="cartCount">0</span>
             </button>
         </div>
     </div>
@@ -72,7 +72,6 @@
                     <div class="mb-3">
                         <label class="form-label">Método de pago</label>
                         <select id="metodoPago" class="form-select" required>
-                            <!-- se llena desde API o fallback -->
                         </select>
                         <div class="invalid-feedback">Selecciona un método de pago.</div>
                     </div>
@@ -137,6 +136,16 @@
     const fmtCRC = new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', minimumFractionDigits: 2 });
 
     let promosActivasPorProducto = {}; 
+
+    function obtenerUserId() {
+            const value = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('id_usuario='))
+                ?.split('=')[1];
+            return value ? parseInt(value, 10) : null;
+        }
+
+    const idUsuario = obtenerUserId() ?? null;
 
     function aTasa(desc) {
       let d = Number(desc);
@@ -248,7 +257,7 @@
 
       $l.empty();
       if (cart.items.length === 0) {
-        $l.append('<li class="list-group-item">Carrito vacío</li>');
+        $l.append('<li class="list-group-item text-center">Carrito vacío</li>');
         return;
       }
 
@@ -444,15 +453,15 @@
     });
     $('#btnVaciar').on('click', clearCart);
 
-    // ========= Checkout (opcional directo desde aquí) =========
+    // ========= Checkout =========
     $('#btnCheckout').on('click', async function () {
       const cart = loadCart();
       if (!cart.items.length) { alert('El carrito está vacío'); return; }
 
-      // Ejemplo mínimo de POST. Ajusta según tu API real:
+      
       const dto = {
-        id_usuario: 1,          // pon el usuario actual
-        id_metodo_pago: 1,      // pon lo que corresponda
+        id_usuario: idUsuario,          
+        id_metodo_pago: 0,      
         nota_cliente: cart.nota_cliente || '',
         lineas: cart.items.map(it => ({
           id_producto: it.id_producto,
@@ -479,7 +488,6 @@
     });
 
     function cargarMetodosPago() {
-      // fallback si el endpoint no existe: [1 Sinpe, 2 Transferencia, 3 Tarjeta]
       const fallback = [
         { id: 1, nombre: 'Sinpe movil' },
         { id: 2, nombre: 'Transferencia' },
@@ -493,7 +501,6 @@
         const sel = $('#metodoPago').empty();
         (metodos && metodos.length ? metodos : fallback).forEach(m =>
           sel.append(`<option value="${m.id}">${m.nombre}</option>`));
-        // dispara cambio para mostrar campos correctos
         $('#metodoPago').trigger('change');
       }).catch(() => {
         const sel = $('#metodoPago').empty();
@@ -505,15 +512,13 @@
     $('#metodoPago').on('change', function () {
       const id = Number($(this).val());
       const isTarjeta = id === 3;
-      const isTransfer = id === 1 || id === 2; // SINPE o Transferencia
+      const isTransfer = id === 1 || id === 2; 
       $('#grupoTarjeta').toggleClass('d-none', !isTarjeta);
       $('#grupoTransfer').toggleClass('d-none', !isTransfer);
     });
 
-        // Limpia espacios y no-dígitos
     function onlyDigits(s) { return (s || '').replace(/\D+/g, ''); }
 
-    // Luhn para tarjeta
     function isValidCard(num) {
       const s = onlyDigits(num);
       if (s.length < 13 || s.length > 19) return false;
@@ -537,17 +542,17 @@
       const [mm, yy] = m.split('/').map(x => parseInt(x, 10));
       if (mm < 1 || mm > 12) return false;
       const year = 2000 + yy;
-      const exp = new Date(year, mm, 0, 23, 59, 59); // fin del mes
+      const exp = new Date(year, mm, 0, 23, 59, 59); 
       const now = new Date();
       return exp >= now;
     }
 
     function isValidTransferRef(v) {
       const s = onlyDigits(v);
-      return s.length >= 6 && s.length <= 20; // rango flexible
+      return s.length >= 6 && s.length <= 20; 
     }
 
-        $('#btnCheckout').off('click').on('click', function () {
+    $('#btnCheckout').off('click').on('click', function () {
       const cart = loadCart();
       if (!cart.items.length) { alert('El carrito está vacío'); return; }
       $('#formPago')[0].reset();
@@ -558,17 +563,15 @@
       });
     });
 
-        $('#btnConfirmarPago').on('click', function () {
+    $('#btnConfirmarPago').on('click', function () {
       const cart = loadCart();
       if (!cart.items.length) { alert('El carrito está vacío'); return; }
 
       const metodoId = Number($('#metodoPago').val());
       const nota = $('#notaCliente').val() || '';
 
-      // limpiar estados invalid
       $('#formPago .is-invalid').removeClass('is-invalid');
 
-      // Validaciones según método
       let valido = true;
       if (metodoId === 3) {
         if (!isValidCard($('#cc_numero').val())) { $('#cc_numero').addClass('is-invalid'); valido = false; }
@@ -577,31 +580,28 @@
       } else if (metodoId === 1 || metodoId === 2) {
         if (!isValidTransferRef($('#ref_transfer').val())) { $('#ref_transfer').addClass('is-invalid'); valido = false; }
       } else {
-        // Si llegara un método desconocido, exige selección
         $('#metodoPago').addClass('is-invalid'); valido = false;
       }
 
       if (!valido) return;
 
-      // OK: preparar datos para el API (sin datos sensibles)
       const { total } = cartTotals();
-      const fecha = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const fecha = new Date().toISOString().split('T')[0]; 
       const facturaDto = {
         fecha: fecha,
         total: total,
-        id_usuario: 1,            // Ajusta con el usuario logueado
+        id_usuario: idUsuario,            
         id_metodo_pago: metodoId,
         nota_cliente: nota
       };
 
-      // 1) Crear factura
+      // Crear factura
       $.ajax({
         url: API_FACTURAS,
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(facturaDto),
         success: function (facturaCreada) {
-          // Soportar respuesta con objeto o solo {id: ...}
           const facturaId = facturaCreada?.id ?? facturaCreada?.factura?.id ?? facturaCreada;
 
           if (!facturaId) {
@@ -609,7 +609,6 @@
             return;
           }
 
-          // 2) Crear detalles (uno por item)
           const requests = loadCart().items.map(it => $.ajax({
             url: API_DETALLES,
             type: 'POST',
@@ -623,7 +622,6 @@
           }));
 
           $.when.apply($, requests).then(function () {
-            // Éxito: limpiar carrito, cerrar modal, feedback
             clearCart();
             const modalEl = document.getElementById('modalPago');
             bootstrap.Modal.getInstance(modalEl)?.hide();
