@@ -113,11 +113,10 @@
 </div>
 
 @section Scripts{
-  <!-- Chart.js (CDN) -->
+  <!-- Libreria Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
-    // === Endpoints ===
     const API_FACTURAS  = 'https://localhost:7096/Facturas';
     const API_METODOS   = 'https://localhost:7096/MetodoPago';
     const API_USUARIOS  = 'https://localhost:7096/Usuario';
@@ -144,7 +143,7 @@
       return nombre ?? (id ? METODOS_MAP[id] : null) ?? '-';
     }
 
-    // === Usuarios (cache) ===
+    // === Usuarios ===
     const USUARIOS_CACHE = new Map();
     async function getUsuarioById(id) {
       if (!id) return null;
@@ -169,6 +168,7 @@
       USUARIOS_CACHE.set(id, u);
       return u;
     }
+
     function nombreUsuario(u, fallbackId) {
       if (!u) return fallbackId ? `Usuario #${fallbackId}` : '-';
       return u.nombreCompleto
@@ -197,7 +197,7 @@
       return map;
     }
 
-    // === Charts (instancias para destruir/re-crear) ===
+    // === Charts ===
     let chartVentas = null;
     let chartMetodos = null;
     function safeDestroy(chart) { if (chart) chart.destroy(); }
@@ -238,12 +238,11 @@
       $('#kpiTicket').text(fmtMoneda(ticket));
       $('#kpiUsuarios').text(usuariosSet.size);
 
-      // --- Ventas por día ---
       const porDia = [...groupSumBy(
         facturas,
         f => fmtFechaCorta(f.fecha),
         f => Number(f.total ?? 0)
-      )].sort((a,b) => a[0].localeCompare(b[0])); // [ [fecha, suma], ... ]
+      )].sort((a,b) => a[0].localeCompare(b[0])); 
 
       const labelsDia = porDia.map(x => x[0]);
       const dataDia = porDia.map(x => x[1]);
@@ -295,7 +294,6 @@
         .sort((a,b) => b[1] - a[1])
         .slice(0, 10);
 
-      // Pre-cargar nombres en paralelo
       await Promise.all(porUsuario.map(([uid]) => getUsuarioById(uid)));
 
       const tbody = $('#tablaTopUsuarios tbody').empty();
@@ -319,9 +317,8 @@
 
     // === Inicialización ===
     $(document).ready(function() {
-      // Rango por defecto: últimos 30 días
       const hoy = new Date();
-      const dtHasta = hoy.toISOString().slice(0,10);
+      const dtHasta = hoy.toISOString().slice(0,10); //El toISOString() Transforma la variable date en un String
       const dtDesde = new Date(hoy.getTime() - 29*24*60*60*1000).toISOString().slice(0,10);
       $('#fDesde').val(dtDesde);
       $('#fHasta').val(dtHasta);
@@ -341,7 +338,6 @@
         safeDestroy(chartVentas); safeDestroy(chartMetodos);
       });
 
-      // generar de una vez con el rango por defecto
       generarReporte();
     });
   </script>

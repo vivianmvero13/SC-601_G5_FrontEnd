@@ -53,7 +53,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Se llena por JS -->
                         </tbody>
                         <tfoot>
                             <tr>
@@ -75,7 +74,6 @@
 @section Scripts {
     <script>
 
-        // === Endpoints ===
         const API_URL = 'https://localhost:7096/Usuario';
         const API_URL = 'https://localhost:7096/Productos';
         const API_FACTURAS = 'https://localhost:7096/Facturas';
@@ -193,7 +191,7 @@
             });
         });
 
-                // === Cache y helper para Productos ===
+        // === Cache y helper para Productos ===
         const PRODUCTOS_CACHE = new Map();
 
         async function getProductoById(idProducto) {
@@ -202,14 +200,12 @@
 
             let producto = null;
             try {
-                // Ruta estándar REST: /Productos/{id}
                 producto = await $.getJSON(`${API_URL}/${idProducto}`);
-                // Si el endpoint devolviera un array, tomamos el que coincide
                 if (Array.isArray(producto)) {
                     producto = producto.find(p => (p.id ?? p.Id) == idProducto) ?? producto[0] ?? null;
                 }
             } catch {
-                // Rutas alternativas comunes (ajústalas si tu API difiere)
+
                 try {
                     producto = await $.getJSON(`${API_URL}/GetById/${idProducto}`);
                 } catch {
@@ -264,16 +260,13 @@
                         const idProd = d.id_producto ?? d.idProducto ?? d.productoId ?? null;
                         const cantidad = Number(d.cantidad ?? d.Cantidad ?? 0);
 
-                        // 1) Traer producto del API
                         const prod = await getProductoById(idProd);
 
-                        // 2) Resolver nombre y precio
                         const nombre =
                             prod?.nombre ?? prod?.descripcion ?? prod?.name ??
                             d.nombreProducto ?? d.producto ?? d.descripcion ??
                             (idProd ? `Producto #${idProd}` : 'Producto');
 
-                        // Si el detalle guarda precio, lo usamos; si no, tomamos el de Productos
                         const precioDetalle = Number(d.precioUnitario ?? d.precio);
                         const precioProducto = Number(prod?.precio ?? prod?.price);
                         const precio = Number.isFinite(precioDetalle) ? precioDetalle
