@@ -1,0 +1,96 @@
+﻿@page
+@model Front.Pages.Resenas.ClienteModel
+@{
+    Layout = "_Layout";
+}
+
+<h2>Reseñas</h2>
+
+<button class="btn btn-success mb-3" onclick="window.location.href='/Resenas/Crear'">
+    Nueva Reseña
+</button>
+
+<div class="table-responsive mt-4">
+    <table class="table table-primary">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Producto</th>
+                <th>Comentario</th>
+                <th>Calificación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="resenasTableBody">
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        const API_RESES = "https://localhost:7096/Resenas";
+        const API_USUARIOS = "https://localhost:7096/Usuario";
+        const API_PRODUCTOS = "https://localhost:7096/Productos";
+
+        function getSessionUser() {
+            const id = sessionStorage.getItem("userId");
+            return {
+                id: id ? parseInt(id) : 0
+            };
+        }
+
+        function cargarResenas() {
+            const usuarioLogueado = getSessionUser();
+
+            $.get(API_RESES, function(resenas) {
+                $.when(
+                    $.get(API_USUARIOS),
+                    $.get(API_PRODUCTOS)
+                ).done(function(usuarios, productos) {
+                    usuarios = usuarios[0];
+                    productos = productos[0];
+
+                    let rows = "";
+
+                    if (!resenas || resenas.length === 0) {
+                        rows = `<tr><td colspan="5">No hay reseñas registradas.</td></tr>`;
+                    } else {
+                        resenas.forEach(r => {
+                            const usuario = usuarios.find(u => u.id === r.id_usuario);
+                            const producto = productos.find(p => p.id === r.id_producto);
+
+                            const nombreUsuario = usuario ? usuario.nombre : "Desconocido";
+                            const nombreProducto = producto ? producto.nombre : "Desconocido";
+
+                            const botonEditar = (r.id_usuario === usuarioLogueado.id)
+                                ? `<a class="btn btn-warning btn-sm" href="/Resenas/Editar?id=${r.id}">Editar</a>`
+                                : "";
+
+                            rows += `
+                                <tr>
+                                    <td>${nombreUsuario}</td>
+                                    <td>${nombreProducto}</td>
+                                    <td>${r.comentario}</td>
+                                    <td>${r.calificacion}</td>
+                                    <td>${botonEditar}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    $("#resenasTableBody").html(rows);
+                }).fail(function(err) {
+                    console.error("Error al cargar usuarios o productos:", err);
+                    $("#resenasTableBody").html(`<tr><td colspan="5">Error al cargar usuarios o productos.</td></tr>`);
+                });
+            }).fail(function(err) {
+                console.error("Error al cargar reseñas:", err);
+                $("#resenasTableBody").html(`<tr><td colspan="5">Error al cargar reseñas.</td></tr>`);
+            });
+        }
+
+        $(document).ready(function() {
+            cargarResenas();
+        });
+    </script>
+}

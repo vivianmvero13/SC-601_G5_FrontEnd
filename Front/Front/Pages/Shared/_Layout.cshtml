@@ -34,8 +34,11 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-page="/Promociones/Index">Promociones</a>
                         </li>
-                        <li class="nav-item">
+                        <li class="nav-item" id="navReservacionCliente">
                             <a class="nav-link text-dark" asp-page="/Reservas/ReservacionCliente">Reservaciones</a>
+                        </li>
+                        <li class="nav-item" id="navResenasCliente">
+                            <a class="nav-link text-dark" asp-page="/Resenas/Cliente">Reseñas</a>
                         </li>
 
                         <li class="nav-item dropdown" id="navAdmin" style="display:none;">
@@ -48,6 +51,7 @@
                                 <li><a class="dropdown-item" asp-page="/Inventario/Index">Inventario</a></li>
                                 <li><a class="dropdown-item" asp-page="/Proveedor/Proveedor">Proveedores</a></li>
                                 <li><a class="dropdown-item" asp-page="/Reservas/Reservacion">Reservaciones</a></li>
+                                <li><a class="dropdown-item" asp-page="/Resenas/Admin">Reseñas</a></li>
                                 <li><a class="nav-link text-dark" asp-page="/Promociones/IndexAdmin">Promociones</a></li>
                             </ul>
                         </li>
@@ -107,8 +111,12 @@
             // Acceso restringido con base en rol 1
             if (rol === 1) {
                 $('#navAdmin').show();
+                $('#navResenasCliente').hide();
+                $('#navReservacionCliente').hide();
             } else {
                 $('#navAdmin').hide();
+                 $('#navResenasCliente').show();
+                 $('#navReservacionCliente').show();
             }
 
             // Ocultar o mostrar login con base en cookie
