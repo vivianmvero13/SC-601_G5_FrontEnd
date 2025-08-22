@@ -1,0 +1,85 @@
+﻿@page
+@model Front.Pages.Inventario.CrearModel
+@{
+    Layout = "_Layout";
+}
+
+<h2>Crear Inventario</h2>
+
+<div class="container">
+    <div class="mb-3">
+        <label class="form-label">Cantidad</label>
+        <input type="number" class="form-control" id="cantidad" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Producto</label>
+        <select class="form-control" id="id_producto"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Proveedor</label>
+        <select class="form-control" id="id_proveedor"></select>
+    </div>
+
+    <button type="button" id="guardarDatos" class="btn btn-primary">Guardar</button>
+    <a href="/Inventario/Index" class="btn btn-secondary">Atrás</a>
+</div>
+
+@section Scripts {
+    <script>
+        const API_URL = "https://localhost:7096/Inventario";
+        const PRODUCTO_URL = "https://localhost:7096/Productos";
+        const PROVEEDOR_URL = "https://localhost:7096/Proveedores";
+
+        function cargarProductos() {
+            $.get(PRODUCTO_URL, function(productos) {
+                $("#id_producto").empty();
+                productos.forEach(p => {
+                    $("#id_producto").append(`<option value="${p.id}">${p.nombre}</option>`);
+                });
+            });
+        }
+
+        function cargarProveedores() {
+            $.get(PROVEEDOR_URL, function(proveedores) {
+                $("#id_proveedor").empty();
+                proveedores.forEach(p => {
+                    $("#id_proveedor").append(`<option value="${p.id}">${p.nombre}</option>`);
+                });
+            });
+        }
+
+        function crearInventario() {
+            const item = {
+                cantidad: parseInt($("#cantidad").val()),
+                id_producto: parseInt($("#id_producto").val()),
+                id_proveedor: parseInt($("#id_proveedor").val())
+            };
+
+            $.ajax({
+                url: API_URL,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(item),
+                success: function() {
+                    alert("Inventario agregado");
+                    window.location.href = "/Inventario/Index";
+                },
+                error: function(e) {
+                    console.error("Error al guardar:", e);
+                    alert("Ocurrió un error al guardar.");
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            cargarProductos();
+            cargarProveedores();
+
+            $("#guardarDatos").click(function() {
+                crearInventario();
+            });
+        });
+    </script>
+}
