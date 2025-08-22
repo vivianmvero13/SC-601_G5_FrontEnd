@@ -1,0 +1,103 @@
+﻿@page
+@model Front.Pages.Inventario.EditarModel
+@{
+    Layout = "_Layout";
+}
+
+<h2>Editar Inventario</h2>
+
+<div class="container">
+    <input type="hidden" id="id_inventario" />
+
+    <div class="mb-3">
+        <label class="form-label">Cantidad</label>
+        <input type="number" class="form-control" id="cantidad" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Producto</label>
+        <select class="form-control" id="id_producto"></select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Proveedor</label>
+        <select class="form-control" id="id_proveedor"></select>
+    </div>
+
+    <button type="button" id="actualizarDatos" class="btn btn-primary">Actualizar</button>
+    <a href="/Inventario/Index" class="btn btn-secondary">Atrás</a>
+</div>
+
+@section Scripts {
+    <script>
+        const API_URL = "https://localhost:7096/Inventario";
+        const PRODUCTO_URL = "https://localhost:7096/Productos";
+        const PROVEEDOR_URL = "https://localhost:7096/Proveedores";
+
+        function cargarProductos(callback) {
+            $.get(PRODUCTO_URL, function(productos) {
+                $("#id_producto").empty();
+                productos.forEach(p => {
+                    $("#id_producto").append(`<option value="${p.id}">${p.nombre}</option>`);
+                });
+                if (callback) callback();
+            });
+        }
+
+        function cargarProveedores(callback) {
+            $.get(PROVEEDOR_URL, function(proveedores) {
+                $("#id_proveedor").empty();
+                proveedores.forEach(p => {
+                    $("#id_proveedor").append(`<option value="${p.id}">${p.nombre}</option>`);
+                });
+                if (callback) callback();
+            });
+        }
+
+        function cargarInventarioPorId(id) {
+            $.get(`${API_URL}/${id}`, function(item) {
+                $("#id_inventario").val(item.id);
+                $("#cantidad").val(item.cantidad);
+                $("#id_producto").val(item.id_producto);
+                $("#id_proveedor").val(item.id_proveedor);
+            });
+        }
+
+        function actualizarInventario() {
+            const id = $("#id_inventario").val();
+            const item = {
+                id: parseInt(id),
+                cantidad: parseInt($("#cantidad").val()),
+                id_producto: parseInt($("#id_producto").val()),
+                id_proveedor: parseInt($("#id_proveedor").val())
+            };
+
+            $.ajax({
+                url: `${API_URL}/${id}`,
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(item),
+                success: function() {
+                    alert("Inventario actualizado");
+                    window.location.href = "/Inventario/Index";
+                },
+                error: function(e) {
+                    console.error("Error al actualizar:", e);
+                    alert("Ocurrió un error al actualizar.");
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            const id = new URLSearchParams(window.location.search).get("id");
+            if (id) {
+                cargarProductos(() => cargarInventarioPorId(id));
+                cargarProveedores();
+            }
+
+            $("#actualizarDatos").click(function() {
+                actualizarInventario();
+            });
+        });
+    </script>
+}

@@ -1,0 +1,72 @@
+﻿@page
+@model Front.Pages.Inventario.IndexModel
+@{
+    Layout = "_Layout";
+}
+
+<h2>Inventario</h2>
+
+<a href="/Inventario/Crear" class="btn btn-success mb-3">Nuevo Inventario</a>
+
+<div class="table-responsive mt-4">
+    <table class="table table-primary">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Cantidad</th>
+            <th>Producto</th>
+            <th>Proveedor</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody id="inventarioTableBody"></tbody>
+</table>
+</div>
+
+@section Scripts {
+    <script>
+        const API_URL = "https://localhost:7096/Inventario";
+
+        function cargarInventario() {
+            $.get(API_URL, function(data) {
+                let rows = "";
+                data.forEach(item => {
+                    rows += `
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.cantidad}</td>
+                            <td>${item.producto?.nombre ?? item.id_producto}</td>
+                            <td>${item.proveedor?.nombre ?? item.id_proveedor}</td>
+                            <td>
+                                <a class="btn btn-primary btn-sm" href="/Inventario/Editar?id=${item.id}">Editar</a>
+                                <button class="btn btn-danger btn-sm" onclick="eliminarInventario(${item.id})">Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                $("#inventarioTableBody").html(rows);
+            });
+        }
+
+        function eliminarInventario(id) {
+            if (!confirm("¿Seguro que quieres eliminar este inventario?")) return;
+
+            $.ajax({
+                url: `${API_URL}/${id}`,
+                type: "DELETE",
+                success: function() {
+                    alert("Inventario eliminado");
+                    cargarInventario();
+                },
+                error: function(e) {
+                    console.error("Error al eliminar:", e);
+                    alert("Ocurrió un error al eliminar.");
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            cargarInventario();
+        });
+    </script>
+}
