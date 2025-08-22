@@ -12,32 +12,28 @@
 <script>
     const API_URL = "https://localhost:7096/Resenas";
     const API_USUARIOS = "https://localhost:7096/Usuario";
-    const API_PRODUCTOS = "https://localhost:7096/Productos"; // si quieres mostrar el nombre del producto también
+    const API_PRODUCTOS = "https://localhost:7096/Productos"; 
 
     function cargarResenas() {
         $("#resenasAdmin").html("<p>Cargando reseñas...</p>");
 
         $.get(API_URL, function(data) {
-            $("#resenasAdmin").empty(); // Limpiar el contenedor antes de agregar reseñas
+            $("#resenasAdmin").empty(); 
 
             if (!data || data.length === 0) {
                 $("#resenasAdmin").html("<p>No hay reseñas.</p>");
                 return;
             }
 
-            // Por cada reseña
             data.forEach(r => {
-                // Llamada para traer el usuario
                 $.getJSON(`${API_USUARIOS}/${r.id_usuario}`)
                 .done(function(usuario) {
                     const nombreUsuario = usuario?.nombre || "Desconocido";
 
-                    // Opcional: llamar al producto si quieres mostrarlo
                     $.getJSON(`${API_PRODUCTOS}/${r.id_producto}`)
                     .done(function(producto) {
                         const nombreProducto = producto?.nombre || "Desconocido";
 
-                        // Agregar la reseña al contenedor
                         $("#resenasAdmin").append(`
                             <div class="card mb-3">
                                 <div class="card-body">
