@@ -128,7 +128,7 @@
     const API_PROMOS = 'https://localhost:7096/Promociones';
     const API_FACTURAS = 'https://localhost:7096/Facturas';
     const API_DETALLES = 'https://localhost:7096/DetalleFactura';
-    const API_METODOS = 'https://localhost:7096/MetodosPago'; 
+    const API_METODOS = 'https://localhost:7096/MetodoPago'; 
 
 
     const PLACEHOLDER = "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png";
@@ -230,6 +230,7 @@
       saveCart(cart);
       renderCartMini();
     }
+
     function removeFromCart(productId) {
       const cart = loadCart();
       cart.items = cart.items.filter(x => String(x.id_producto) !== String(productId));

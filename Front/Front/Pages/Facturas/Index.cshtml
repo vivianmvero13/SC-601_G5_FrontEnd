@@ -1,0 +1,372 @@
+﻿@page
+@model Front.Pages.Facturas.IndexModel
+@{
+    Layout = "_Layout";
+}
+
+<h1 class="text-center mb-3">Historial de Facturas (Admin)</h1>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <form id="filtrosForm" class="row g-3">
+            <div class="col-sm-3">
+                <label class="form-label">Desde</label>
+                <input type="date" id="fDesde" class="form-control" />
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label">Hasta</label>
+                <input type="date" id="fHasta" class="form-control" />
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label">ID Usuario</label>
+                <input type="number" id="fUsuario" class="form-control" placeholder="ej. 7" />
+            </div>
+            <div class="col-sm-3">
+                <label class="form-label">ID Factura</label>
+                <input type="number" id="fFactura" class="form-control" placeholder="ej. 123" />
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+                <button type="button" id="btnLimpiar" class="btn btn-outline-secondary">Limpiar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle" id="tablaAdmin">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Usuario</th>
+                <th>Total</th>
+                <th>Método de pago</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="6" class="text-center">Use los filtros y presione "Buscar".</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Detalle (reutilizado del cliente) -->
+<div class="modal fade" id="detalleFacturaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalle de factura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="loadingDetalle" class="text-center my-3 d-none">
+                    <div class="spinner-border" role="status"></div>
+                    <div>Cargando detalle...</div>
+                </div>
+                <div id="detalleHeader" class="mb-3"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="tablaDetalles">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Precio</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">Total</th>
+                                <th class="text-end" id="detalleTotal">-</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // === Endpoints ===
+        const API_PRODUCTOS = 'https://localhost:7096/Productos';
+        const API_FACTURAS  = 'https://localhost:7096/Facturas';
+        const API_DETALLES  = 'https://localhost:7096/DetalleFactura';
+        const API_METODOS   = 'https://localhost:7096/MetodoPago';
+        const API_USUARIOS = 'https://localhost:7096/Usuario';
+        const USUARIOS_CACHE = new Map();
+
+        async function getUsuarioById(id) {
+          if (!id) return null;
+          if (USUARIOS_CACHE.has(id)) return USUARIOS_CACHE.get(id);
+
+          let u = null;
+          try {
+            u = await $.getJSON(`${API_USUARIOS}/${id}`);
+            if (Array.isArray(u)) {
+              u = u.find(x => (x.id ?? x.Id) == id) ?? u[0] ?? null;
+            }
+          } catch {
+            try {
+              const list = await $.getJSON(API_USUARIOS);
+              if (Array.isArray(list)) {
+                list.forEach(x => USUARIOS_CACHE.set(x.id ?? x.Id, x));
+                u = USUARIOS_CACHE.get(id) ?? null;
+              }
+            } catch { u = null; }
+          }
+
+          USUARIOS_CACHE.set(id, u);
+          return u;
+        }
+
+        function nombreUsuario(u, fallbackId) {
+          if (!u) return fallbackId ? `Usuario #${fallbackId}` : '-';
+          return u.nombreCompleto
+              ?? [u.nombre, u.apellido].filter(Boolean).join(' ')
+              ?? u.username
+              ?? u.email
+              ?? (fallbackId ? `Usuario #${fallbackId}` : '-');
+        }
+
+
+        // === Métodos de pago (map id->nombre) ===
+        let METODOS_MAP = {};
+        const METODOS_FALLBACK = { 1: 'Sinpe movil', 2: 'Transferencia', 3: 'Tarjeta' };
+
+        function cargarMetodosMap() {
+          return $.getJSON(API_METODOS)
+            .then(list => {
+              if (Array.isArray(list) && list.length) {
+                METODOS_MAP = {};
+                list.forEach(m => { METODOS_MAP[m.id] = m.nombre; });
+              } else {
+                METODOS_MAP = { ...METODOS_FALLBACK };
+              }
+            })
+            .catch(() => { METODOS_MAP = { ...METODOS_FALLBACK }; });
+        }
+
+        function nombreMetodoPagoFrom(obj) {
+          const nombre = obj.metodoPago ?? obj.nombreMetodoPago ?? null;
+          const id = obj.id_metodo_pago ?? obj.idMetodoPago ?? obj.metodoPagoId ?? obj.idMetodo ?? null;
+          return nombre ?? (id ? METODOS_MAP[id] : null) ?? '-';
+        }
+
+        // === Utilidades ===
+        function fmtFecha(iso) {
+          try { return new Date(iso).toLocaleDateString('es-CR'); } catch { return iso; }
+        }
+        function fmtMoneda(n) {
+          if (typeof n !== 'number') n = Number(n) || 0;
+          try { return n.toLocaleString('es-CR', { style:'currency', currency:'CRC' }); } catch { return n.toFixed(2); }
+        }
+        function toggleLoadingDetalle(show) {
+          $('#loadingDetalle').toggleClass('d-none', !show);
+          $('#tablaDetalles').toggleClass('opacity-50', show);
+        }
+
+        // === Cache productos ===
+        const PRODUCTOS_CACHE = new Map();
+        async function getProductoById(idProducto) {
+          if (!idProducto) return null;
+          if (PRODUCTOS_CACHE.has(idProducto)) return PRODUCTOS_CACHE.get(idProducto);
+          let producto = null;
+          try {
+            producto = await $.getJSON(`${API_PRODUCTOS}/${idProducto}`);
+            if (Array.isArray(producto)) {
+              producto = producto.find(p => (p.id ?? p.Id) == idProducto) ?? producto[0] ?? null;
+            }
+          } catch {
+            try { producto = await $.getJSON(`${API_PRODUCTOS}/GetById/${idProducto}`); }
+            catch {
+              try {
+                producto = await $.getJSON(`${API_PRODUCTOS}?id=${idProducto}`);
+                if (Array.isArray(producto)) {
+                  producto = producto.find(p => (p.id ?? p.Id) == idProducto) ?? producto[0] ?? null;
+                }
+              } catch { producto = null; }
+            }
+          }
+          PRODUCTOS_CACHE.set(idProducto, producto);
+          return producto;
+        }
+
+        // === Buscar facturas (admin) ===
+        async function buscarFacturas() {
+          await cargarMetodosMap();
+
+          const desde = $('#fDesde').val();
+          const hasta = $('#fHasta').val();
+          const idUsuario = $('#fUsuario').val();
+          const idFactura = $('#fFactura').val();
+
+          const params = new URLSearchParams();
+          if (desde) params.append('desde', desde);
+          if (hasta) params.append('hasta', hasta);
+          if (idUsuario) params.append('idUsuario', idUsuario);
+          if (idFactura) params.append('idFactura', idFactura);
+
+          const url = `${API_FACTURAS}/Historial${params.toString() ? `?${params}` : ''}`;
+
+          const tbody = $('#tablaAdmin tbody');
+          tbody.html('<tr><td colspan="6" class="text-center">Cargando...</td></tr>');
+
+          $.ajax({
+            url,
+            type: 'GET',
+            dataType: 'json',
+            success: async function(data) {
+              const tbody = $('#tablaAdmin tbody');
+              tbody.empty();
+
+              if (!Array.isArray(data) || data.length === 0) {
+                tbody.html('<tr><td colspan="6" class="text-center">Sin resultados.</td></tr>');
+                return;
+              }
+
+              // 1) Pre-cargar en paralelo los usuarios únicos
+              const userIds = [...new Set(
+                data.map(f => f.id_usuario ?? f.idUsuario).filter(Boolean)
+              )];
+              await Promise.all(userIds.map(id => getUsuarioById(id)));
+
+              // 2) Pintar filas con nombre de usuario y método de pago
+              for (const factura of data) {
+                const uid = factura.id_Usuario ?? null;
+                const usuario = uid ? await getUsuarioById(uid) : null;
+                const nombre = nombreUsuario(usuario, uid);
+                const metodo = nombreMetodoPagoFrom(factura);
+
+                const row = `<tr>
+                    <td>${factura.id}</td>
+                    <td>${fmtFecha(factura.fecha)}</td>
+                    <td>${nombre}</td>
+                    <td class="text-end">${fmtMoneda(factura.total)}</td>
+                    <td>${metodo}</td>
+                    <td class="text-end">
+                      <button class="btn btn-sm btn-primary btn-detalle" data-id="${factura.id}">Ver</button>
+                    </td>
+                  </tr>`;
+                tbody.append(row);
+              }
+            },
+
+            error: function() {
+              tbody.html('<tr><td colspan="6" class="text-center text-danger">Error al cargar las facturas.</td></tr>');
+            }
+          });
+        }
+
+        // === Detalle de factura (modal) ===
+        $(document).on('click', '.btn-detalle', async function () {
+          const idFactura = $(this).data('id');
+          await cargarDetalleFactura(idFactura);
+          const modal = new bootstrap.Modal(document.getElementById('detalleFacturaModal'));
+          modal.show();
+        });
+
+        async function cargarDetalleFactura(idFactura) {
+          $('#detalleHeader').html('');
+          $('#tablaDetalles tbody').empty();
+          $('#detalleTotal').text('-');
+          toggleLoadingDetalle(true);
+
+          try {
+            const factura = await $.getJSON(`${API_FACTURAS}/${idFactura}`);
+
+            let detalles = [];
+            try { detalles = await $.getJSON(`${API_DETALLES}/Factura/${idFactura}`); }
+            catch  {
+              try { detalles = await $.getJSON(`${API_DETALLES}/PorFactura/${idFactura}`); } catch {}
+            }
+
+            const nombreMetodo = nombreMetodoPagoFrom(factura);
+            $('#detalleHeader').html(`
+                <div class="row g-2">
+                  <div class="col-6"><strong>Factura #:</strong> ${factura.id}</div>
+                  <div class="col-6"><strong>Fecha:</strong> ${fmtFecha(factura.fecha)}</div>
+                  <div class="col-6"><strong>Método de pago:</strong> ${nombreMetodo}</div>
+                  <div class="col-6"><strong>Total:</strong> ${fmtMoneda(factura.total)}</div>
+                  ${factura.nota_cliente ? `<div class="col-12"><strong>Nota:</strong> ${factura.nota_cliente}</div>` : ``}
+                </div>
+            `);
+
+            const tbody = $('#tablaDetalles tbody');
+            let total = 0;
+
+            if (Array.isArray(detalles) && detalles.length > 0) {
+              for (const d of detalles) {
+                const idProd = d.id_producto ?? d.idProducto ?? d.productoId ?? null;
+                const cantidad = Number(d.cantidad ?? d.Cantidad ?? 0);
+
+                const prod = await getProductoById(idProd);
+
+                const nombre = prod?.nombre ?? prod?.descripcion ?? prod?.name
+                              ?? d.nombreProducto ?? d.producto ?? d.descripcion
+                              ?? (idProd ? `Producto #${idProd}` : 'Producto');
+
+                const precioDetalle = Number(d.precioUnitario ?? d.precio);
+                const precioProducto = Number(prod?.precio ?? prod?.price);
+                const precio = Number.isFinite(precioDetalle) ? precioDetalle
+                            : Number.isFinite(precioProducto) ? precioProducto
+                            : 0;
+
+                const subtotal = Number.isFinite(Number(d.subtotal))
+                    ? Number(d.subtotal)
+                    : cantidad * precio;
+
+                total += subtotal;
+
+                tbody.append(`<tr>
+                    <td>${nombre}</td>
+                    <td class="text-end">${cantidad}</td>
+                    <td class="text-end">${fmtMoneda(precio)}</td>
+                    <td class="text-end">${fmtMoneda(subtotal)}</td>
+                </tr>`);
+              }
+            } else {
+              tbody.append('<tr><td colspan="4" class="text-center">Sin detalles para esta factura.</td></tr>');
+              total = Number(factura.total ?? 0);
+            }
+
+            $('#detalleTotal').text(fmtMoneda(total));
+          } catch (e) {
+            console.error(e);
+            $('#detalleHeader').html('<div class="alert alert-danger">No se pudo cargar el detalle.</div>');
+            $('#tablaDetalles tbody').html('');
+            $('#detalleTotal').text('-');
+          } finally {
+            toggleLoadingDetalle(false);
+          }
+        }
+
+        // === Eventos de filtros ===
+        $(document).ready(function () {
+          // Por comodidad, setear "Hasta" = hoy
+          const hoy = new Date().toISOString().slice(0,10);
+          $('#fHasta').val(hoy);
+
+          $('#filtrosForm').on('submit', function (e) {
+            e.preventDefault();
+            buscarFacturas();
+          });
+
+          $('#btnLimpiar').on('click', function () {
+            $('#fDesde').val('');
+            $('#fHasta').val(hoy);
+            $('#fUsuario').val('');
+            $('#fFactura').val('');
+            $('#tablaAdmin tbody').html('<tr><td colspan="6" class="text-center">Use los filtros y presione "Buscar".</td></tr>');
+          });
+        });
+    </script>
+}
