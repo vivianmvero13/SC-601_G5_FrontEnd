@@ -1,0 +1,94 @@
+﻿@page
+@model Front.Pages.Resenas.CrearModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <h2>Agregar Reseña</h2>
+    <form id="formResena">
+        <div class="mb-3">
+            <label for="producto" class="form-label">Producto</label>
+            <select id="producto" class="form-select" required></select>
+        </div>
+
+        <div class="mb-3">
+            <label for="comentario" class="form-label">Comentario</label>
+            <textarea id="comentario" class="form-control" required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="calificacion" class="form-label">Calificación</label>
+            <select id="calificacion" class="form-select" required>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">Guardar</button>
+        <a href="/Resenas/Cliente" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<script>
+    const apiResenas = "https://localhost:7096/Resenas";
+    const apiProductos = "https://localhost:7096/Productos";
+
+    function getSessionUser() {
+        return {
+            id: parseInt(sessionStorage.getItem("userId")),
+            nombre: sessionStorage.getItem("userNombre"),
+            correo: sessionStorage.getItem("userCorreo")
+        };
+    }
+
+    function cargarProductos() {
+        $.get(apiProductos, function(productos) {
+            productos.forEach(p => {
+                $("#producto").append(`<option value="${p.id}">${p.nombre}</option>`);
+            });
+        });
+    }
+
+    $("#formResena").on("submit", function(e) {
+        e.preventDefault();
+
+        const usuario = getSessionUser();
+
+        if (!usuario.id || usuario.id === 0) {
+            alert("No se pudo obtener el usuario logueado. Por favor inicia sesión.");
+            return;
+        }
+
+        const nuevaResena = {
+            comentario: $("#comentario").val(),
+            calificacion: parseInt($("#calificacion").val()),
+            id_usuario: usuario.id,       
+            id_producto: parseInt($("#producto").val())
+        };
+
+        console.log("Reseña a enviar:", nuevaResena);
+
+        $.ajax({
+            url: apiResenas,
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(nuevaResena),
+            success: function() {
+                alert("Reseña guardada correctamente");
+                window.location.href = "/Resenas/Cliente";
+            },
+            error: function(e) {
+                console.error("Error al guardar:", e);
+                alert("Ocurrió un error al guardar la reseña.");
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        cargarProductos();
+    });
+</script>

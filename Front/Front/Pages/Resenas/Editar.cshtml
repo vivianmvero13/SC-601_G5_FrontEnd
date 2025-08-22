@@ -1,0 +1,53 @@
+﻿@page
+@model Front.Pages.Resenas.EditarModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <h2>Editar Reseña</h2>
+    <form id="formEditar">
+        <div class="mb-3">
+            <label for="comentario" class="form-label">Comentario</label>
+            <textarea id="comentario" class="form-control" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Actualizar</button>
+        <a href="/Resenas/Cliente" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+        const apiUrl = "https://localhost:7096/Resenas";
+    const id = new URLSearchParams(window.location.search).get("id");
+
+    $(document).ready(function () {
+        $.getJSON(apiUrl + "/" + id, function (data) {
+            $("#comentario").val(data.comentario);
+        });
+    });
+
+    $("#formEditar").on("submit", function (e) {
+        e.preventDefault();
+
+        const actualizado = {
+            id: parseInt(id),
+            comentario: $("#comentario").val()
+        };
+
+        $.ajax({
+            url: apiUrl + "/" + id,
+            method: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(actualizado),
+            success: function () {
+                window.location.href = "/Resenas/Cliente";
+            },
+            error: function () {
+                alert("Error al actualizar la reseña.");
+            }
+        });
+    });
+</script>
+}
+

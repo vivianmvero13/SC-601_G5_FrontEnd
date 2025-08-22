@@ -1,0 +1,86 @@
+﻿@page
+@model Front.Pages.Resenas.AdminModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <h2>Gestión de Reseñas</h2>
+    <div id="resenasAdmin"></div>
+</div>
+
+<script>
+    const API_URL = "https://localhost:7096/Resenas";
+    const API_USUARIOS = "https://localhost:7096/Usuario";
+    const API_PRODUCTOS = "https://localhost:7096/Productos"; // si quieres mostrar el nombre del producto también
+
+    function cargarResenas() {
+        $("#resenasAdmin").html("<p>Cargando reseñas...</p>");
+
+        $.get(API_URL, function(data) {
+            $("#resenasAdmin").empty(); // Limpiar el contenedor antes de agregar reseñas
+
+            if (!data || data.length === 0) {
+                $("#resenasAdmin").html("<p>No hay reseñas.</p>");
+                return;
+            }
+
+            // Por cada reseña
+            data.forEach(r => {
+                // Llamada para traer el usuario
+                $.getJSON(`${API_USUARIOS}/${r.id_usuario}`)
+                .done(function(usuario) {
+                    const nombreUsuario = usuario?.nombre || "Desconocido";
+
+                    // Opcional: llamar al producto si quieres mostrarlo
+                    $.getJSON(`${API_PRODUCTOS}/${r.id_producto}`)
+                    .done(function(producto) {
+                        const nombreProducto = producto?.nombre || "Desconocido";
+
+                        // Agregar la reseña al contenedor
+                        $("#resenasAdmin").append(`
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <p><strong>${nombreUsuario}</strong> - Producto: ${nombreProducto}</p>
+                                    <p>Comentario: ${r.comentario}</p>
+                                    <p>Calificación: ${r.calificacion}</p>
+                                    <a href="/Resenas/Editar?id=${r.id}" class="btn btn-warning btn-sm">Editar</a>
+                                    <button onclick="eliminar(${r.id})" class="btn btn-danger btn-sm">Eliminar</button>
+                                </div>
+                            </div>
+                        `);
+                    })
+                    .fail(function() {
+                        console.log(`No se pudo cargar el producto con ID ${r.id_producto}`);
+                    });
+                })
+                .fail(function() {
+                    console.log(`No se pudo cargar el usuario con ID ${r.id_usuario}`);
+                });
+            });
+        })
+        .fail(function() {
+            console.log("No se pudo cargar las reseñas");
+            $("#resenasAdmin").html("<p>Error al cargar reseñas.</p>");
+        });
+    }
+
+    function eliminar(id) {
+        if (!confirm("¿Seguro que quieres eliminar esta reseña?")) return;
+
+        $.ajax({
+            url: `${API_URL}/${id}`,
+            type: "DELETE",
+            success: function() {
+                cargarResenas();
+            },
+            error: function() {
+                alert("Error al eliminar la reseña.");
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        cargarResenas();
+    });
+</script>
