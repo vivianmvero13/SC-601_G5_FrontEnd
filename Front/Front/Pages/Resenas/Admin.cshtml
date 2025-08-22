@@ -40,7 +40,6 @@
                                     <p><strong>${nombreUsuario}</strong> - Producto: ${nombreProducto}</p>
                                     <p>Comentario: ${r.comentario}</p>
                                     <p>Calificación: ${r.calificacion}</p>
-                                    <a href="/Resenas/Editar?id=${r.id}" class="btn btn-warning btn-sm">Editar</a>
                                     <button onclick="eliminar(${r.id})" class="btn btn-danger btn-sm">Eliminar</button>
                                 </div>
                             </div>
@@ -65,9 +64,10 @@
         if (!confirm("¿Seguro que quieres eliminar esta reseña?")) return;
 
         $.ajax({
-            url: `${API_URL}/${id}`,
+            url: `${API_URL}?id=${id}`,
             type: "DELETE",
             success: function() {
+                alert("Reseña eliminada");
                 cargarResenas();
             },
             error: function() {

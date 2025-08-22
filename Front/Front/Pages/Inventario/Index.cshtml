@@ -51,7 +51,7 @@
             if (!confirm("¿Seguro que quieres eliminar este inventario?")) return;
 
             $.ajax({
-                url: `${API_URL}/${id}`,
+            url: `${API_URL}?id=${id}`,
                 type: "DELETE",
                 success: function() {
                     alert("Inventario eliminado");

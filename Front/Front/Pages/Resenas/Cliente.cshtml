@@ -62,9 +62,9 @@
                             const nombreUsuario = usuario ? usuario.nombre : "Desconocido";
                             const nombreProducto = producto ? producto.nombre : "Desconocido";
 
-                            const botonEditar = (r.id_usuario === usuarioLogueado.id)
-                                ? `<a class="btn btn-warning btn-sm" href="/Resenas/Editar?id=${r.id}">Editar</a>`
-                                : "";
+                             const botonEditar = (Number(r.id_usuario) === Number(usuarioLogueado.id))
+                        ? `<a class="btn btn-warning btn-sm" href="/Resenas/Editar?id=${r.id}">Editar</a>`
+                        : "";
 
                             rows += `
                                 <tr>

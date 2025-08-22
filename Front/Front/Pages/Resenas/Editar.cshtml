@@ -4,50 +4,68 @@
     Layout = "_Layout";
 }
 
+<h2>Editar Reseña</h2>
+
 <div class="container">
-    <h2>Editar Reseña</h2>
-    <form id="formEditar">
-        <div class="mb-3">
-            <label for="comentario" class="form-label">Comentario</label>
-            <textarea id="comentario" class="form-control" required></textarea>
-        </div>
-        <button type="submit" class="btn btn-success">Actualizar</button>
-        <a href="/Resenas/Cliente" class="btn btn-secondary">Cancelar</a>
-    </form>
+    <div class="mb-3">
+        <label class="form-label">Comentario</label>
+        <textarea class="form-control" id="comentario" rows="3"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Calificación</label>
+        <select class="form-control" id="calificacion">
+            <option value="1">1 - Muy malo</option>
+            <option value="2">2 - Malo</option>
+            <option value="3">3 - Regular</option>
+            <option value="4">4 - Bueno</option>
+            <option value="5">5 - Muy bueno</option>
+        </select>
+    </div>
+
+    <button type="button" id="actualizarDatos" class="btn btn-primary">Actualizar</button>
+    <a href="/Resenas/Cliente" class="btn btn-secondary">Atrás</a>
 </div>
 
-@section Scripts {
-<script>
-        const apiUrl = "https://localhost:7096/Resenas";
-    const id = new URLSearchParams(window.location.search).get("id");
+    <script>
+        const API_URL = "https://localhost:7096/Resenas";
+        const id = new URLSearchParams(window.location.search).get("id"); // solo la reseña del usuario logueado
 
-    $(document).ready(function () {
-        $.getJSON(apiUrl + "/" + id, function (data) {
-            $("#comentario").val(data.comentario);
+        function cargarResenaPorId() {
+            $.get(`${API_URL}/${id}`, function(r) {
+                $("#comentario").val(r.comentario);
+                $("#calificacion").val(r.calificacion);
+            }).fail(function() {
+                alert("No se pudo cargar la reseña.");
+            });
+        }
+
+        function actualizarResena() {
+            const resena = {
+                id: parseInt(id),
+                comentario: $("#comentario").val(),
+                calificacion: parseInt($("#calificacion").val())
+            };
+
+            $.ajax({
+            url: `${API_URL}`,
+                type: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify(resena),
+                success: function() {
+                    alert("Reseña actualizada");
+                    window.location.href = "/Resenas/Cliente";
+                },
+                error: function() {
+                    alert("Error al actualizar la reseña.");
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            cargarResenaPorId();
+            $("#actualizarDatos").click(function() {
+                actualizarResena();
+            });
         });
-    });
-
-    $("#formEditar").on("submit", function (e) {
-        e.preventDefault();
-
-        const actualizado = {
-            id: parseInt(id),
-            comentario: $("#comentario").val()
-        };
-
-        $.ajax({
-            url: apiUrl + "/" + id,
-            method: "PUT",
-            contentType: "application/json",
-            data: JSON.stringify(actualizado),
-            success: function () {
-                window.location.href = "/Resenas/Cliente";
-            },
-            error: function () {
-                alert("Error al actualizar la reseña.");
-            }
-        });
-    });
-</script>
-}
-
+    </script>
