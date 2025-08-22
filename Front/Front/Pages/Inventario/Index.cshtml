@@ -1,0 +1,82 @@
+﻿@page
+@model Front.Pages.Inventario.IndexModel
+@{
+    Layout = "_Layout";
+}
+
+<h1>Lista de Inventario</h1>
+
+<div class="container">
+    <a class="btn btn-primary mb-3" href="/Inventario/Crear">Nuevo registro</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-primary">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cantidad</th>
+                <th>Producto</th>
+                <th>Proveedor</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="listaDatos"></tbody>
+    </table>
+</div>
+
+<script>
+    const API_URL = 'https://localhost:7096/Inventario';
+    const PRODUCTO_URL = 'https://localhost:7096/Productos';
+    const PROVEEDOR_URL = 'https://localhost:7096/Proveedores';
+
+    function cargarDatos() {
+        $.get(API_URL, function(datos) {
+            $("#listaDatos").empty();
+
+            datos.forEach(item => {
+                $.when(
+                    $.get(`${PROVEEDOR_URL}/${item.id_proveedor}`),
+                    $.get(`${PRODUCTO_URL}/${item.id_producto}`)
+                ).done(function(proveedorResp, productoResp) {
+                    const proveedor = proveedorResp[0];
+                    const producto = productoResp[0];
+
+                    $("#listaDatos").append(`
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.cantidad}</td>
+                            <td>${producto.nombre}</td>
+                            <td>${proveedor.nombre}</td>
+                            <td>
+                                    <a class="btn btn-primary" href="/Inventario/Editar?id=${item.id}">Editar</a>
+                                    <a class="btn btn-danger" href="#" onclick="eliminar(${item.id})">Eliminar</a>
+                            </td>
+                        </tr>
+                    `);
+                });
+            });
+        });
+    }
+
+    function eliminar(id) {
+        if (confirm("¿Desea eliminar este inventario?")) {
+            $.ajax({
+                url: `${API_URL}?id=${id}`,
+                type: 'DELETE',
+                success: function() {
+                    alert("Inventario eliminado");
+                    cargarDatos();
+                },
+                error: function(e) {
+                    console.error("Error al eliminar:", e);
+                }
+            });
+        }
+    }
+
+    $(document).ready(function() {
+        cargarDatos();
+    });
+</script>
+
