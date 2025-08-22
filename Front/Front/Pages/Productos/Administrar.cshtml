@@ -1,0 +1,346 @@
+﻿@page
+@model Front.Pages.Productos.AdministrarModel
+
+@{
+    Layout = "_Layout";
+}
+
+<h1 class="text-center">Productos</h1>
+
+<div class="text-center mb-4">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="abrirModalNuevo()">Agregar Producto</button>
+</div>
+
+<div class="container mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Categoría</label>
+            <select class="form-select" id="filtroCategoria">
+                <option value="">Todas</option>
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="filtroNombre" placeholder="Buscar por nombre...">
+        </div>
+        <div class="col-md-4">
+            <button class="btn btn-primary" id="btnFiltrar">Filtrar</button>
+            <button class="btn btn-outline-secondary" id="btnLimpiar">Limpiar</button>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="container">
+    <div class="row" id="listaProductos"></div>
+</div>
+
+
+<div class="modal fade" id="modalProducto" tabindex="-1" aria-labelledby="modalProductoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalProductoLabel">Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="id">
+
+                <div class="mb-3">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="nombre">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" class="form-control" id="descripcion">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Precio</label>
+                    <input type="number" class="form-control" id="precio">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Categoría</label>
+                    <select class="form-select" id="id_categoria"></select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Imagen</label>
+                    <input type="text" class="form-control" id="imagen">
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="guardarProducto">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'https://localhost:7096/Productos';
+    const API_CATEGORIAS = 'https://localhost:7096/CategoriaProductos';
+    const API_PROMOS = 'https://localhost:7096/Promociones';
+
+    let modoEditar = false;
+    let promosActivasPorProducto = {};
+
+    const PLACEHOLDER = "https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png";
+    const esUrlImagen = (v) => typeof v === "string" && /^(https?:\/\/|data:image\/)/i.test(v?.trim?.() ?? "");
+    const fmtCRC = new Intl.NumberFormat('es-CR', { style: 'currency', currency: 'CRC', minimumFractionDigits: 2 });
+
+    function aTasa(desc) {
+      let d = Number(desc);
+      if (!isFinite(d) || d <= 0) return 0;
+      if (d > 1) d = d / 100;
+      return Math.min(Math.max(d, 0), 0.99);
+    }
+
+
+    function parseDateOnly(s) {
+      if (!s) return null;
+      return new Date(`${s}T00:00:00`);
+    }
+    function finDeDia(d) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+    }
+
+    function cargarPromociones() {
+      return $.ajax({
+        url: API_PROMOS,
+        method: 'GET',
+        success: function (promos) {
+          const now = new Date();
+          const map = {};
+          (promos || []).forEach(pr => {
+            const ini = parseDateOnly(pr.fecha_inicio);
+            const fin = parseDateOnly(pr.fecha_fin);
+            const activa = ini && fin && now >= ini && now <= finDeDia(fin);
+            const rate = aTasa(pr.descuento);
+            if (!activa || rate <= 0) return;
+
+           //En caso de que haya mas de una promocion activa se elige la de mayor descuento
+            const prev = map[pr.id_producto];
+            if (!prev || rate > prev.rate) {
+              map[pr.id_producto] = {
+                ...pr,
+                rate,
+                pct: Math.round(rate * 100)
+              };
+            }
+          });
+          promosActivasPorProducto = map;
+        }
+      });
+    }
+
+    function cargarDatos({ categoriaId = null, q = '' } = {}) {
+      let url = API_URL;
+      const params = new URLSearchParams();
+      if (categoriaId !== null && categoriaId !== '') params.set('categoriaId', categoriaId);
+      if (typeof q === 'string' && q.trim() !== '') params.set('q', q.trim());
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
+
+      $.ajax({
+        url,
+        method: 'GET',
+        success: function (productos) {
+          const contenedor = $("#listaProductos");
+          contenedor.empty();
+
+          if (!productos || productos.length === 0) {
+            contenedor.append(`
+              <div class="col-12"><div class="alert alert-info mb-0">
+                No se encontraron productos con los filtros seleccionados.
+              </div></div>
+            `);
+            return;
+          }
+
+          productos.forEach(p => {
+            const imgSrc = esUrlImagen(p.imagen) ? p.imagen.trim() : PLACEHOLDER;
+
+            const promo = promosActivasPorProducto[p.id];
+            const precioNum = Number(p.precio) || 0;
+
+            let precioHtml;
+            let badgeHtml = '';
+
+            if (promo) {
+              const precioFinal = Math.max(0, +(precioNum * (1 - promo.rate)).toFixed(2));
+              badgeHtml = `<span class="badge bg-danger position-absolute top-0 start-0 m-2">-${promo.pct}%</span>`;
+              precioHtml = `
+                <p class="card-text mb-1">
+                  <b> Precio: </b>
+                  <span class="text-muted text-decoration-line-through me-2">${fmtCRC.format(precioNum)}</span>
+                  <span class="fw-bold text-success">${fmtCRC.format(precioFinal)}</span>
+                </p>
+                <p class="card-text text-danger text-center small mb-0">${promo.descripcion ?? ''}</p>
+              `;
+            } else {
+              precioHtml = `<p class="card-text"><b>Precio: </b>${fmtCRC.format(precioNum)}</p>`;
+            }
+
+            contenedor.append(`
+              <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm position-relative">
+                  ${badgeHtml}
+                  <img class="card-img-top"
+                       alt="${p.nombre || 'Producto'}"
+                       src="${imgSrc}"
+                       style="height:220px;object-fit:cover;"
+                       onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
+                  <div class="card-body">
+                    <h5 class="card-title text-center fw-bold">${p.nombre}</h5>
+                    <p class="card-text"><b>Descripción: </b>${p.descripcion}</p>
+                    ${precioHtml}
+                  </div>
+                  <div class="card-footer d-flex justify-content-between">
+                    <button class="btn btn-sm btn-primary btn-editar"
+                            data-id="${p.id}"
+                            data-nombre="${(p.nombre ?? '').replace(/"/g,'&quot;')}"
+                            data-descripcion="${(p.descripcion ?? '').replace(/"/g,'&quot;')}"
+                            data-precio="${p.precio}"
+                            data-id_categoria="${p.id_categoria}"
+                            data-imagen="${(p.imagen ?? '').replace(/"/g,'&quot;')}">
+                      Editar
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarProducto(${p.id})">Eliminar</button>
+                  </div>
+                </div>
+              </div>
+            `);
+          });
+        },
+        error: function () { alert("Error al cargar productos"); }
+      });
+    }
+
+
+    function abrirModalNuevo() {
+        modoEditar = false;
+        limpiarFormulario();
+        $('#modalProducto').modal('show');
+    }
+
+    $(document).on('click', '.btn-editar', function () {
+      const b = $(this).data();
+      abrirModalEditar(b.id, b.nombre, b.descripcion, b.precio, b.id_categoria, b.imagen);
+    });
+
+    function abrirModalEditar(id, nombre, descripcion, precio, id_categoria, imagen) {
+      modoEditar = true;
+      $('#id').val(id);
+      $('#nombre').val(nombre);
+      $('#descripcion').val(descripcion);
+      $('#precio').val(precio);
+      $('#id_categoria').val(id_categoria);
+      $('#imagen').val(imagen);
+      $('#modalProducto').modal('show');
+    }
+
+
+    function limpiarFormulario() {
+        $('#id').val("");
+        $('#nombre').val("");
+        $('#descripcion').val("");
+        $('#precio').val("");
+        $('#id_categoria').val("");
+        $('#imagen').val("");
+    }
+
+    $('#guardarProducto').click(function () {
+        const item = {
+            id: $('#id').val(),
+            nombre: $('#nombre').val(),
+            descripcion: $('#descripcion').val(),
+            precio: $('#precio').val(),
+            id_categoria: $('#id_categoria').val(),
+            imagen: $('#imagen').val()
+        };
+
+        if (modoEditar) {
+            $.ajax({
+                url: `${API_URL}/${item.id}`,
+                type: "PUT",
+                contentType: 'application/json',
+                data: JSON.stringify(item),
+                success: function () {
+                    $('#modalProducto').modal('hide');
+                    cargarDatos();
+                }
+            });
+        } else {
+            item.id = 0;
+            $.ajax({
+                url: API_URL,
+                type: "POST",
+                contentType: 'application/json',
+                data: JSON.stringify(item),
+                success: function () {
+                    $('#modalProducto').modal('hide');
+                    cargarDatos();
+                }
+            });
+        }
+    });
+
+    function eliminarProducto(id) {
+        if (!confirm("¿Estás seguro de eliminar este producto?")) return;
+
+        $.ajax({
+            url: `${API_URL}/${id}`,
+            type: "DELETE",
+            success: function () {
+                cargarDatos();
+            }
+        });
+    }
+
+    $('#btnFiltrar').on('click', function () {
+      const categoriaId = $('#filtroCategoria').val();
+      const q = $('#filtroNombre').val();
+      cargarDatos({ categoriaId, q });
+    });
+
+    $('#btnLimpiar').on('click', function () {
+      $('#filtroCategoria').val('');
+      $('#filtroNombre').val('');
+      cargarDatos();
+    });
+
+    $('#filtroNombre').on('keyup', function (e) {
+      if (e.key === 'Enter') $('#btnFiltrar').click();
+    });
+
+    $('#filtroCategoria').on('change', () => $('#btnFiltrar').click());
+
+    function cargarCategorias() {
+      return $.ajax({
+        url: API_CATEGORIAS,
+        method: 'GET',
+        success: function (categorias) {
+          const selModal = $('#id_categoria');
+          selModal.empty();
+          categorias.forEach(c => selModal.append(`<option value="${c.id}">${c.nombre}</option>`));
+
+          const selFiltro = $('#filtroCategoria');
+          selFiltro.find('option:not([value=""])').remove();
+          categorias.forEach(c => selFiltro.append(`<option value="${c.id}">${c.nombre}</option>`));
+        },
+        error: function () { alert("Error al cargar categorías."); }
+      });
+    }
+
+    $(document).ready(function () {
+        //Primero se cargan las promos y categorias luego los datos
+      $.when(cargarCategorias(), cargarPromociones())
+        .then(() => cargarDatos());
+    });
+
+</script>

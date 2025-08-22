@@ -1,0 +1,314 @@
+﻿@page
+@model Front.Pages.Facturas.Historial_clienteModel
+@{
+    Layout = "_Layout";
+}
+
+<h1 class="text-center">Historial Pedidos</h1>
+
+<div class="table-responsive">
+    <table class="table table-striped" id="facturasTable">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Método de pago</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="5" class="text-center">Cargando...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Detalle de Factura -->
+<div class="modal fade" id="detalleFacturaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalle de factura</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div id="loadingDetalle" class="text-center my-3 d-none">
+                    <div class="spinner-border" role="status"></div>
+                    <div>Cargando detalle...</div>
+                </div>
+
+                <div id="detalleHeader" class="mb-3">
+                    <!-- Se llena por JS -->
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="tablaDetalles">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Precio</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena por JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">Total</th>
+                                <th class="text-end" id="detalleTotal">-</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+
+        // === Endpoints ===
+        const API_URL = 'https://localhost:7096/Usuario';
+        const API_URL = 'https://localhost:7096/Productos';
+        const API_FACTURAS = 'https://localhost:7096/Facturas';
+        const API_DETALLES = 'https://localhost:7096/DetalleFactura';
+        const API_METODOS = 'https://localhost:7096/MetodoPago';
+
+        // === Mapeo de métodos de pago ===
+        let METODOS_MAP = {};
+        const METODOS_FALLBACK = { 1: 'Sinpe movil', 2: 'Transferencia', 3: 'Tarjeta' };
+
+        function cargarMetodosMap() {
+            return $.getJSON(API_METODOS)
+                .then(list => {
+                    if (Array.isArray(list) && list.length) {
+                        METODOS_MAP = {};
+                        list.forEach(m => {
+                            METODOS_MAP[m.id] = m.nombre;
+                        });
+                    } else {
+                        METODOS_MAP = { ...METODOS_FALLBACK };
+                    }
+                })
+                .catch(() => { METODOS_MAP = { ...METODOS_FALLBACK }; });
+        }
+
+        function nombreMetodoPagoFrom(obj) {
+            const nombre =
+                obj.metodoPago ??
+                obj.nombreMetodoPago ??
+                null;
+
+            const id =
+                obj.id_metodo_pago ??
+                obj.idMetodoPago ??
+                obj.metodoPagoId ??
+                obj.idMetodo ??
+                null;
+
+            return nombre ?? (id ? METODOS_MAP[id] : null) ?? '-';
+        }
+
+        // === Utilidades ===
+        function obtenerUserId() {
+            const value = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('id_usuario='))?.split('=')[1];
+            return value ? parseInt(value, 10) : null;
+        }
+        const idUsuario = obtenerUserId() ?? null;
+
+        function fmtFecha(iso) {
+            try { return new Date(iso).toLocaleDateString('es-CR'); }
+            catch { return iso; }
+        }
+
+        function fmtMoneda(n) {
+            if (typeof n !== 'number') n = Number(n) || 0;
+            try { return n.toLocaleString('es-CR', { style: 'currency', currency: 'CRC' }); }
+            catch { return n.toFixed(2); }
+        }
+
+
+        function toggleLoadingDetalle(show) {
+            $('#loadingDetalle').toggleClass('d-none', !show);
+            $('#tablaDetalles').toggleClass('opacity-50', show);
+        }
+
+        // === Carga tabla principal ===
+        $(document).ready(async function () {
+            if (!idUsuario) {
+                alert('No se ha encontrado el ID de usuario.');
+                return;
+            }
+
+            await cargarMetodosMap();
+
+            $.ajax({
+                url: `${API_FACTURAS}/Historial/${idUsuario}`,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    const tbody = $('#facturasTable tbody');
+                    tbody.empty();
+
+                    if (data.length > 0) {
+                        data.forEach(factura => {
+                            const nombreMetodo = nombreMetodoPagoFrom(factura);
+                            const row = `<tr>
+                                <td>${factura.id}</td>
+                                <td>${fmtFecha(factura.fecha)}</td>
+                                <td class="text-end">${fmtMoneda(factura.total)}</td>
+                                <td>${nombreMetodo}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-primary btn-sm btn-detalle" data-id="${factura.id}">
+                                        Ver detalles
+                                    </button>
+                                </td>
+                            </tr>`;
+                            tbody.append(row);
+                        });
+                    } else {
+                        tbody.append('<tr><td colspan="5" class="text-center">No hay facturas disponibles.</td></tr>');
+                    }
+                },
+                error: function () {
+                    alert('Error al cargar las facturas.');
+                }
+            });
+
+            $(document).on('click', '.btn-detalle', async function () {
+                const idFactura = $(this).data('id');
+                await cargarDetalleFactura(idFactura);
+                const modal = new bootstrap.Modal(document.getElementById('detalleFacturaModal'));
+                modal.show();
+            });
+        });
+
+                // === Cache y helper para Productos ===
+        const PRODUCTOS_CACHE = new Map();
+
+        async function getProductoById(idProducto) {
+            if (!idProducto) return null;
+            if (PRODUCTOS_CACHE.has(idProducto)) return PRODUCTOS_CACHE.get(idProducto);
+
+            let producto = null;
+            try {
+                // Ruta estándar REST: /Productos/{id}
+                producto = await $.getJSON(`${API_URL}/${idProducto}`);
+                // Si el endpoint devolviera un array, tomamos el que coincide
+                if (Array.isArray(producto)) {
+                    producto = producto.find(p => (p.id ?? p.Id) == idProducto) ?? producto[0] ?? null;
+                }
+            } catch {
+                // Rutas alternativas comunes (ajústalas si tu API difiere)
+                try {
+                    producto = await $.getJSON(`${API_URL}/GetById/${idProducto}`);
+                } catch {
+                    try {
+                        producto = await $.getJSON(`${API_URL}?id=${idProducto}`);
+                        if (Array.isArray(producto)) {
+                            producto = producto.find(p => (p.id ?? p.Id) == idProducto) ?? producto[0] ?? null;
+                        }
+                    } catch { producto = null; }
+                }
+            }
+
+            PRODUCTOS_CACHE.set(idProducto, producto);
+            return producto;
+        }
+
+
+        // === Carga detalle para el modal ===
+        async function cargarDetalleFactura(idFactura) {
+            $('#detalleHeader').html('');
+            $('#tablaDetalles tbody').empty();
+            $('#detalleTotal').text('-');
+            toggleLoadingDetalle(true);
+
+            try {
+                const factura = await $.getJSON(`${API_FACTURAS}/${idFactura}`);
+
+                let detalles = [];
+                try {
+                    detalles = await $.getJSON(`${API_DETALLES}/Factura/${idFactura}`);
+                } catch {
+                    try { detalles = await $.getJSON(`${API_DETALLES}/PorFactura/${idFactura}`); } catch {}
+                }
+
+                const nombreMetodo = nombreMetodoPagoFrom(factura);
+
+                $('#detalleHeader').html(`
+                    <div class="row g-2">
+                        <div class="col-6"><strong>Factura #:</strong> ${factura.id}</div>
+                        <div class="col-6"><strong>Fecha:</strong> ${fmtFecha(factura.fecha)}</div>
+                        <div class="col-6"><strong>Método de pago:</strong> ${nombreMetodo}</div>
+                        <div class="col-6"><strong>Total:</strong> ${fmtMoneda(factura.total)}</div>
+                        ${factura.nota_cliente ? `<div class="col-12"><strong>Nota:</strong> ${factura.nota_cliente}</div>` : ''}
+                    </div>
+                `);
+
+                const tbody = $('#tablaDetalles tbody');
+                let total = 0;
+
+                if (Array.isArray(detalles) && detalles.length > 0) {
+                    for (const d of detalles) {
+                        const idProd = d.id_producto ?? d.idProducto ?? d.productoId ?? null;
+                        const cantidad = Number(d.cantidad ?? d.Cantidad ?? 0);
+
+                        // 1) Traer producto del API
+                        const prod = await getProductoById(idProd);
+
+                        // 2) Resolver nombre y precio
+                        const nombre =
+                            prod?.nombre ?? prod?.descripcion ?? prod?.name ??
+                            d.nombreProducto ?? d.producto ?? d.descripcion ??
+                            (idProd ? `Producto #${idProd}` : 'Producto');
+
+                        // Si el detalle guarda precio, lo usamos; si no, tomamos el de Productos
+                        const precioDetalle = Number(d.precioUnitario ?? d.precio);
+                        const precioProducto = Number(prod?.precio ?? prod?.price);
+                        const precio = Number.isFinite(precioDetalle) ? precioDetalle
+                                     : Number.isFinite(precioProducto) ? precioProducto
+                                     : 0;
+
+                        const subtotal = Number.isFinite(Number(d.subtotal))
+                            ? Number(d.subtotal)
+                            : cantidad * precio;
+
+                        total += subtotal;
+
+                        tbody.append(`<tr>
+                            <td>${nombre}</td>
+                            <td class="text-end">${cantidad}</td>
+                            <td class="text-end">${fmtMoneda(precio)}</td>
+                            <td class="text-end">${fmtMoneda(subtotal)}</td>
+                        </tr>`);
+                    }
+                } else {
+                    tbody.append('<tr><td colspan="4" class="text-center">Sin detalles para esta factura.</td></tr>');
+                    total = Number(factura.total ?? 0);
+                }
+
+                $('#detalleTotal').text(fmtMoneda(total));
+
+            } catch (e) {
+                console.error(e);
+                $('#detalleHeader').html('<div class="alert alert-danger">No se pudo cargar el detalle.</div>');
+                $('#tablaDetalles tbody').html('');
+                $('#detalleTotal').text('-');
+            } finally {
+                toggleLoadingDetalle(false);
+            }
+        }
+    </script>
+}
+

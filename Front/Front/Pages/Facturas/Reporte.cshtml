@@ -1,0 +1,348 @@
+﻿@page
+@model Front.Pages.Facturas.ReporteModel
+
+@{
+    Layout = "_Layout";
+}
+
+<h1 class="text-center mb-4">Reportes de Ventas</h1>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form id="filtrosForm" class="row g-3">
+      <div class="col-sm-3">
+        <label class="form-label">Desde</label>
+        <input type="date" id="fDesde" class="form-control" />
+      </div>
+      <div class="col-sm-3">
+        <label class="form-label">Hasta</label>
+        <input type="date" id="fHasta" class="form-control" />
+      </div>
+      <div class="col-sm-3">
+        <label class="form-label">ID Usuario (opcional)</label>
+        <input type="number" id="fUsuario" class="form-control" />
+      </div>
+      <div class="col-sm-3">
+        <label class="form-label">ID Factura (opcional)</label>
+        <input type="number" id="fFactura" class="form-control" />
+      </div>
+      <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Generar</button>
+        <button type="button" id="btnLimpiar" class="btn btn-outline-secondary">Limpiar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3 mb-3">
+  <div class="col-sm-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fw-bold text-muted">Total vendido</div>
+        <div class="fs-4" id="kpiTotal">-</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fw-bold text-muted"># Facturas</div>
+        <div class="fs-4" id="kpiFacturas">-</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fw-bold text-muted">Ticket promedio</div>
+        <div class="fs-4" id="kpiTicket">-</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fw-bold text-muted">Usuarios únicos</div>
+        <div class="fs-4" id="kpiUsuarios">-</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gráficas -->
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Ventas por día</h5>
+        <canvas id="chartVentas"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Ventas por método de pago</h5>
+        <canvas id="chartMetodos"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Top Usuarios -->
+<div class="card mt-3">
+  <div class="card-body">
+    <h5 class="card-title">Top 10 usuarios por ventas</h5>
+    <div class="table-responsive">
+      <table class="table table-striped" id="tablaTopUsuarios">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Usuario</th>
+            <th class="text-end">Total</th>
+            <th class="text-end">Facturas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="4" class="text-center">Genera el reporte para ver resultados.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+@section Scripts{
+  <!-- Chart.js (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    // === Endpoints ===
+    const API_FACTURAS  = 'https://localhost:7096/Facturas';
+    const API_METODOS   = 'https://localhost:7096/MetodoPago';
+    const API_USUARIOS  = 'https://localhost:7096/Usuario';
+
+    // === Catálogo Métodos de pago ===
+    let METODOS_MAP = {};
+    const METODOS_FALLBACK = { 1: 'Sinpe movil', 2: 'Transferencia', 3: 'Tarjeta' };
+
+    async function cargarMetodosMap() {
+      try {
+        const list = await $.getJSON(API_METODOS);
+        if (Array.isArray(list) && list.length) {
+          METODOS_MAP = {};
+          list.forEach(m => METODOS_MAP[m.id] = m.nombre);
+        } else {
+          METODOS_MAP = { ...METODOS_FALLBACK };
+        }
+      } catch { METODOS_MAP = { ...METODOS_FALLBACK }; }
+    }
+
+    function nombreMetodoPagoFrom(obj) {
+      const nombre = obj.metodoPago ?? obj.nombreMetodoPago ?? null;
+      const id = obj.id_metodo_pago ?? obj.idMetodoPago ?? obj.metodoPagoId ?? obj.idMetodo ?? null;
+      return nombre ?? (id ? METODOS_MAP[id] : null) ?? '-';
+    }
+
+    // === Usuarios (cache) ===
+    const USUARIOS_CACHE = new Map();
+    async function getUsuarioById(id) {
+      if (!id) return null;
+      if (USUARIOS_CACHE.has(id)) return USUARIOS_CACHE.get(id);
+
+      let u = null;
+      try {
+        u = await $.getJSON(`${API_USUARIOS}/${id}`);
+        if (Array.isArray(u)) {
+          u = u.find(x => (x.id ?? x.Id) == id) ?? u[0] ?? null;
+        }
+      } catch {
+        try {
+          const list = await $.getJSON(API_USUARIOS);
+          if (Array.isArray(list)) {
+            list.forEach(x => USUARIOS_CACHE.set(x.id ?? x.Id, x));
+            u = USUARIOS_CACHE.get(id) ?? null;
+          }
+        } catch { u = null; }
+      }
+
+      USUARIOS_CACHE.set(id, u);
+      return u;
+    }
+    function nombreUsuario(u, fallbackId) {
+      if (!u) return fallbackId ? `Usuario #${fallbackId}` : '-';
+      return u.nombreCompleto
+        ?? [u.nombre, u.apellido].filter(Boolean).join(' ')
+        ?? u.username
+        ?? u.email
+        ?? (fallbackId ? `Usuario #${fallbackId}` : '-');
+    }
+
+    // === Utilidades ===
+    function fmtFechaCorta(iso) {
+      try { return new Date(iso).toISOString().slice(0,10); } catch { return iso; }
+    }
+    function fmtMoneda(n) {
+      if (typeof n !== 'number') n = Number(n) || 0;
+      try { return n.toLocaleString('es-CR', { style:'currency', currency:'CRC' }); }
+      catch { return n.toFixed(2); }
+    }
+    function groupSumBy(arr, keySelector, valueSelector) {
+      const map = new Map();
+      for (const x of arr) {
+        const k = keySelector(x);
+        const v = valueSelector(x);
+        map.set(k, (map.get(k) ?? 0) + v);
+      }
+      return map;
+    }
+
+    // === Charts (instancias para destruir/re-crear) ===
+    let chartVentas = null;
+    let chartMetodos = null;
+    function safeDestroy(chart) { if (chart) chart.destroy(); }
+
+    // === Generar Reporte ===
+    async function generarReporte() {
+      await cargarMetodosMap();
+
+      const desde = $('#fDesde').val();
+      const hasta = $('#fHasta').val();
+      const idUsuario = $('#fUsuario').val();
+      const idFactura = $('#fFactura').val();
+
+      const params = new URLSearchParams();
+      if (desde) params.append('desde', desde);
+      if (hasta) params.append('hasta', hasta);
+      if (idUsuario) params.append('idUsuario', idUsuario);
+      if (idFactura) params.append('idFactura', idFactura);
+
+      const url = `${API_FACTURAS}/Historial${params.toString() ? `?${params}` : ''}`;
+
+      let facturas = [];
+      try {
+        facturas = await $.getJSON(url);
+      } catch {
+        $('#tablaTopUsuarios tbody').html('<tr><td colspan="4" class="text-center text-danger">No se pudo obtener el reporte.</td></tr>');
+        return;
+      }
+
+      // --- KPIs ---
+      const total = facturas.reduce((s, f) => s + Number(f.total ?? 0), 0);
+      const count = facturas.length;
+      const usuariosSet = new Set(facturas.map(f => f.id_Usuario).filter(Boolean));
+      const ticket = count ? total / count : 0;
+
+      $('#kpiTotal').text(fmtMoneda(total));
+      $('#kpiFacturas').text(count);
+      $('#kpiTicket').text(fmtMoneda(ticket));
+      $('#kpiUsuarios').text(usuariosSet.size);
+
+      // --- Ventas por día ---
+      const porDia = [...groupSumBy(
+        facturas,
+        f => fmtFechaCorta(f.fecha),
+        f => Number(f.total ?? 0)
+      )].sort((a,b) => a[0].localeCompare(b[0])); // [ [fecha, suma], ... ]
+
+      const labelsDia = porDia.map(x => x[0]);
+      const dataDia = porDia.map(x => x[1]);
+
+      safeDestroy(chartVentas);
+      const ctxVentas = document.getElementById('chartVentas').getContext('2d');
+      chartVentas = new Chart(ctxVentas, {
+        type: 'line',
+        data: {
+          labels: labelsDia,
+          datasets: [{ label: 'Ventas', data: dataDia, tension: 0.2, fill: false }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // --- Ventas por método de pago ---
+      const porMetodo = [...groupSumBy(
+        facturas,
+        f => nombreMetodoPagoFrom(f),
+        f => Number(f.total ?? 0)
+      )].sort((a,b) => b[1] - a[1]);
+
+      safeDestroy(chartMetodos);
+      const ctxMetodos = document.getElementById('chartMetodos').getContext('2d');
+      chartMetodos = new Chart(ctxMetodos, {
+        type: 'bar',
+        data: {
+          labels: porMetodo.map(x => x[0]),
+          datasets: [{ label: 'Ventas', data: porMetodo.map(x => x[1]) }]
+        },
+        options: {
+          responsive: true,
+          indexAxis: 'y',
+          scales: { x: { beginAtZero: true } },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // --- Top usuarios ---
+      const porUsuario = [...groupSumBy(
+        facturas,
+        f => (f.id_Usuario ?? '-'),
+        f => Number(f.total ?? 0)
+      )].filter(([k]) => k !== '-')
+        .sort((a,b) => b[1] - a[1])
+        .slice(0, 10);
+
+      // Pre-cargar nombres en paralelo
+      await Promise.all(porUsuario.map(([uid]) => getUsuarioById(uid)));
+
+      const tbody = $('#tablaTopUsuarios tbody').empty();
+      if (porUsuario.length === 0) {
+        tbody.html('<tr><td colspan="4" class="text-center">No hay datos en el rango seleccionado.</td></tr>');
+      } else {
+        let rank = 1;
+        for (const [uid, monto] of porUsuario) {
+          const u = await getUsuarioById(uid);
+          const nombre = nombreUsuario(u, uid);
+          const facturasUsuario = facturas.filter(f => (f.id_Usuario) == uid).length;
+          tbody.append(`<tr>
+            <td>${rank++}</td>
+            <td>${nombre}</td>
+            <td class="text-end">${fmtMoneda(monto)}</td>
+            <td class="text-end">${facturasUsuario}</td>
+          </tr>`);
+        }
+      }
+    }
+
+    // === Inicialización ===
+    $(document).ready(function() {
+      // Rango por defecto: últimos 30 días
+      const hoy = new Date();
+      const dtHasta = hoy.toISOString().slice(0,10);
+      const dtDesde = new Date(hoy.getTime() - 29*24*60*60*1000).toISOString().slice(0,10);
+      $('#fDesde').val(dtDesde);
+      $('#fHasta').val(dtHasta);
+
+      $('#filtrosForm').on('submit', function(e){
+        e.preventDefault();
+        generarReporte();
+      });
+
+      $('#btnLimpiar').on('click', function(){
+        $('#fUsuario').val('');
+        $('#fFactura').val('');
+        $('#fDesde').val(dtDesde);
+        $('#fHasta').val(dtHasta);
+        $('#tablaTopUsuarios tbody').html('<tr><td colspan="4" class="text-center">Genera el reporte para ver resultados.</td></tr>');
+        $('#kpiTotal,#kpiFacturas,#kpiTicket,#kpiUsuarios').text('-');
+        safeDestroy(chartVentas); safeDestroy(chartMetodos);
+      });
+
+      // generar de una vez con el rango por defecto
+      generarReporte();
+    });
+  </script>
+}
