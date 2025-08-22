@@ -1,0 +1,200 @@
+﻿
+@page
+@model Front.Pages.Proveedor.ProveedorModel
+@{
+}
+
+
+<div class="card shadow p-4 mb-4 rounded-3">
+    <h5 class="mb-3 text-success fw-bold">Formulario de Registro</h5>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label for="id" class="form-label fw-bold">ID</label>
+            <input type="text" class="form-control" name="id" id="id" placeholder="Automático" readonly>
+        </div>
+
+        <div class="col-md-6">
+            <label for="nombre" class="form-label fw-bold">Nombre</label>
+            <input type="text" class="form-control" name="nombre" id="nombre" placeholder="Tu nombre">
+        </div>
+
+        <div class="col-md-6">
+            <label for="telefono" class="form-label fw-bold">Teléfono</label>
+            <input type="text" class="form-control" name="telefono" id="telefono" placeholder="+506">
+        </div>
+
+        <div class="col-md-6">
+            <label for="correo" class="form-label fw-bold">Correo</label>
+            <input type="email" class="form-control" name="correo" id="correo" placeholder="correo@ejemplo.com">
+        </div>
+
+        <div class="col-md-12">
+            <label for="id_direccion" class="form-label fw-bold">ID Dirección</label>
+            <input type="text" class="form-control" name="id_direccion" id="id_direccion" placeholder="Dirección ">
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <a id="guardarDatos" class="btn btn-primary flex-fill">Nuevo registro</a>
+        <a id="modificarDatos" class="btn btn-success flex-fill" style="display:none;"> Actualizar</a>
+        <a id="limpiarDatos" onclick="limpiarDatos()" class="btn btn-outline-secondary flex-fill"> Limpiar</a>
+    </div>
+</div>
+<h1 class="text-center my-4">Lista de Datos de Proveedores</h1>
+<div class="card shadow rounded-3">
+    <div class="card-header bg-success text-white fw-bold text-center">
+      Registros
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Correo</th>
+                    <th>ID Dirección</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="listaDatos">
+               
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<script>
+
+    const API_URL = 'https://localhost:7096/Proveedores';
+
+    function cargarDatos(){
+        limpiarDatos();
+        $.ajax({
+            url: API_URL,
+            method: 'GET',
+            success: function(dato){
+                console.log(dato);
+                $("#listaDatos").empty();
+
+                dato.forEach(item => {
+                    $("#listaDatos").append(`
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.nombre}</td>
+                            <td>${item.telefono}</td>
+                            <td>${item.correo}</td>
+                            <td>${item.id_direccion}</td>
+                            <th>
+                                <a class="btn btn-outline-success" href="#" onclick="cargarEditar(${item.id}, '${item.nombre}', '${item.telefono}', '${item.correo}', '${item.id_direccion}')">Editar</a>
+                                <a class="btn btn-outline-danger" href="#" onclick="eliminarProveedor(${item.id})">Eliminar</a>
+                            </th>
+                        </tr>
+                    `);
+                });
+            },
+            error: function(xhr, status, error){
+                console.error("Error: " + error);
+            }
+        });
+    }
+
+    function cargarEditar(id, nombre, telefono, correo,id_direccion){
+        $('#id').val(id);
+        $('#nombre').val(nombre);
+        $('#telefono').val(telefono);
+        $('#correo').val(correo);
+        $('#id_direccion').val(id_direccion);
+
+        $("#guardarDatos").hide();
+        $("#modificarDatos").show();
+    }
+
+    function limpiarDatos(){
+        $('#id').val("");
+        $('#nombre').val("");
+        $('#telefono').val("");
+        $('#correo').val("");
+        $('#id_direccion').val("");
+
+        $("#modificarDatos").hide();
+        $("#guardarDatos").show();
+    }
+
+    $("#guardarDatos").click(function() {
+        const item = {
+            id: 0,
+            nombre: $('#nombre').val(),
+            telefono: $('#telefono').val(),
+            correo: $('#correo').val(),
+            id_direccion: $('#id_direccion').val()
+        };
+
+        $.ajax({
+            url: API_URL,
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            success: function(){
+                alert("Registro guardado");
+                cargarDatos();
+                limpiarDatos();
+            },
+            error: function(xhr, status, error){
+                console.error("Error: " + error);
+                alert("Error al guardar el registro");
+            }
+        });
+    });
+
+    $("#modificarDatos").click(function() {
+        const item = {
+            id: parseInt($('#id').val()),
+            nombre: $('#nombre').val(),
+            telefono: $('#telefono').val(),
+            correo: $('#correo').val(),
+            id_direccion:parseInt($('#id_direccion').val())
+
+        };
+
+        $.ajax({
+            url: API_URL,
+            type: "PUT",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            success: function(){
+                alert("Registro actualizado");
+                cargarDatos();
+                limpiarDatos();
+            },
+            error: function(xhr, status, error){
+                console.error("Error: " + error);
+                alert("Error al actualizar el registro");
+            }
+        });
+    });
+
+    function eliminarProveedor(id) {
+        if(confirm("¿Estás seguro de eliminar este proveedor?")) {
+            $.ajax({
+                url: API_URL + '?id=' + id,
+                type: 'DELETE',
+                contentType: 'application/json',
+                success: function() {
+                    alert("Proveedor eliminado");
+                    cargarDatos();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al eliminar proveedor: ", error);
+                    alert("No se pudo eliminar el proveedor.");
+                }
+            });
+        }
+    }
+
+    $(document).ready(function(){
+        cargarDatos();
+        $("#modificarDatos").hide();
+    });
+</script>
