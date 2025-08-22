@@ -1,0 +1,245 @@
+﻿@page
+@model Front.Pages.Reservas.ReservacionModel
+@{
+}
+
+<div class="card shadow p-4 mb-4 rounded-3">
+    <h5 class="mb-3 text-info">Formulario de Reservas</h5>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label for="id" class="form-label fw-bold">ID</label>
+            <input type="text" class="form-control" name="id" id="id" placeholder="Automático" readonly>
+        </div>
+
+        <div class="col-md-6">
+            <label for="fecha_reserva" class="form-label fw-bold">Fecha de Reserva</label>
+            <input type="date" class="form-control" name="fecha_reserva" id="fecha_reserva">
+        </div>
+
+        <div class="col-md-6">
+            <label for="id_usuario" class="form-label fw-bold">Usuario</label>
+            <select class="form-select" id="id_usuario"></select>
+        </div>
+
+        <div class="col-md-6">
+            <label for="id_estado" class="form-label fw-bold">Estado</label>
+            <select class="form-select" id="id_estado"></select>
+        </div>
+
+        <div class="col-md-6">
+            <label for="id_metodo_pago" class="form-label fw-bold">Método de Pago</label>
+            <select class="form-select" id="id_metodo_pago"></select>
+        </div>
+
+        <div class="col-md-12">
+            <label for="nota_cliente" class="form-label fw-bold">Nota del Cliente</label>
+            <textarea class="form-control" name="nota_cliente" id="nota_cliente" rows="2" placeholder="Observaciones"></textarea>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <a id="guardarDatos" class="btn btn-primary flex-fill">Nueva reserva</a>
+        <a id="modificarDatos" class="btn btn-success flex-fill" style="display:none;">Actualizar</a>
+        <a id="limpiarDatos" onclick="limpiarDatos()" class="btn btn-outline-secondary flex-fill">Limpiar</a>
+    </div>
+</div>
+
+<h1 class="text-center my-4">Lista de Reservaciones</h1>
+<div class="card shadow rounded-3">
+    <div class="card-header bg-info text-white fw-bold text-center">
+      Registros
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha Reserva</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                    <th>Método Pago</th>
+                    <th>Nota Cliente</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="listaDatos">
+               
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'https://localhost:7096/Reservas';
+    const API_USUARIO = 'https://localhost:7096/Usuario';
+    const API_ESTADO = 'https://localhost:7096/Estados';
+    const API_METODO = 'https://localhost:7096/MetodoPago';
+
+    let usuarios = [];
+    let estados = [];
+    let metodos = [];
+
+    function cargarCombos() {
+        $.get(API_USUARIO, function(data) {
+            usuarios = data;
+            $("#id_usuario").empty().append('<option value="">Seleccione Usuario</option>');
+            usuarios.forEach(u => {
+                $("#id_usuario").append(`<option value="${u.id}">${u.nombre}</option>`);
+            });
+        });
+
+        $.get(API_ESTADO, function(data) {
+            estados = data;
+            $("#id_estado").empty().append('<option value="">Seleccione Estado</option>');
+            estados.forEach(e => {
+                $("#id_estado").append(`<option value="${e.id}">${e.nombre}</option>`);
+            });
+        });
+
+        $.get(API_METODO, function(data) {
+            metodos = data;
+            $("#id_metodo_pago").empty().append('<option value="">Seleccione Método de Pago</option>');
+            metodos.forEach(m => {
+                $("#id_metodo_pago").append(`<option value="${m.id}">${m.nombre}</option>`);
+            });
+        });
+    }
+
+    function cargarDatos(){
+        limpiarDatos();
+        $.ajax({
+            url: API_URL,
+            method: 'GET',
+            success: function(dato){
+                $("#listaDatos").empty();
+                dato.forEach(item => {
+                    const usuarioNombre = usuarios.find(u => u.id === item.id_usuario)?.nombre || "N/A";
+                    const estadoNombre = estados.find(e => e.id === item.id_estado)?.nombre || "N/A";
+                    const metodoNombre = metodos.find(m => m.id === item.id_metodo_pago)?.nombre || "N/A";
+
+                    $("#listaDatos").append(`
+                        <tr>
+                            <td>${item.id}</td>
+                            <td>${item.fecha_reserva}</td>
+                            <td>${usuarioNombre}</td>
+                            <td>${estadoNombre}</td>
+                            <td>${metodoNombre}</td>
+                            <td>${item.nota_cliente}</td>
+                            <th>
+                                <a class="btn btn-outline-success" href="#"
+                                    onclick="cargarEditar(${item.id}, '${item.fecha_reserva}', ${item.id_usuario}, ${item.id_estado}, ${item.id_metodo_pago}, '${item.nota_cliente}')">Editar</a>
+                                <a class="btn btn-outline-danger" href="#"
+                                    onclick="eliminarReserva(${item.id})">Eliminar</a>
+                            </th>
+                        </tr>
+                    `);
+                });
+            },
+            error: function(xhr, status, error){
+                console.error("Error: " + error);
+            }
+        });
+    }
+
+    function cargarEditar(id, fecha_reserva, id_usuario, id_estado, id_metodo_pago, nota_cliente){
+        $('#id').val(id);
+        $('#fecha_reserva').val(fecha_reserva);
+        $('#id_usuario').val(id_usuario);
+        $('#id_estado').val(id_estado);
+        $('#id_metodo_pago').val(id_metodo_pago);
+        $('#nota_cliente').val(nota_cliente);
+
+        $("#guardarDatos").hide();
+        $("#modificarDatos").show();
+    }
+
+    function limpiarDatos(){
+        $('#id').val("");
+        $('#fecha_reserva').val("");
+        $('#id_usuario').val("");
+        $('#id_estado').val("");
+        $('#id_metodo_pago').val("");
+        $('#nota_cliente').val("");
+
+        $("#modificarDatos").hide();
+        $("#guardarDatos").show();
+    }
+
+    $("#guardarDatos").click(function() {
+        const item = {
+            id: 0,
+            fecha_reserva: $('#fecha_reserva').val(),
+            id_usuario: parseInt($('#id_usuario').val()),
+            id_estado: parseInt($('#id_estado').val()),
+            id_metodo_pago: parseInt($('#id_metodo_pago').val()),
+            nota_cliente: $('#nota_cliente').val()
+        };
+
+        $.ajax({
+            url: API_URL,
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            success: function(){
+                alert("Reserva guardada");
+                cargarDatos();
+                limpiarDatos();
+            },
+            error: function(xhr, status, error){
+                console.error("Error: " + error);
+                alert("Error al guardar la reserva");
+            }
+        });
+    });
+
+    $("#modificarDatos").click(function() {
+        const item = {
+            id: parseInt($('#id').val()),
+            fecha_reserva: $('#fecha_reserva').val(),
+            id_usuario: parseInt($('#id_usuario').val()),
+            id_estado: parseInt($('#id_estado').val()),
+            id_metodo_pago: parseInt($('#id_metodo_pago').val()),
+            nota_cliente: $('#nota_cliente').val()
+        };
+
+        $.ajax({
+            url: API_URL,
+            type: "PUT",
+            contentType: 'application/json',
+            data: JSON.stringify(item),
+            success: function(){
+                alert("Reserva actualizada");
+                cargarDatos();
+                limpiarDatos();
+            },
+            error: function(xhr, status, error){
+                console.error("Error: " + error);
+                alert("Error al actualizar la reserva");
+            }
+        });
+    });
+
+    function eliminarReserva(id) {
+        if(confirm("¿Estás seguro de eliminar esta reserva?")) {
+            $.ajax({
+                url: API_URL + '?id=' + id,
+                type: 'DELETE',
+                contentType: 'application/json',
+                success: function() {
+                    alert("Reserva eliminada");
+                    cargarDatos();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error al eliminar reserva: ", error);
+                    alert("No se pudo eliminar la reserva.");
+                }
+            });
+        }
+    }
+
+    $(document).ready(function(){
+        cargarCombos();
+        setTimeout(cargarDatos, 1000);
+        $("#modificarDatos").hide();
+    });
+</script>
