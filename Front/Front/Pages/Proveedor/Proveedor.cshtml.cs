@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Front.Pages.Proveedor
 {
-    public class ProveedorcshtmlModel : PageModel
+    public class ProveedorModel : PageModel
     {
         public void OnGet()
         {
